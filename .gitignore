@@ -1,0 +1,23 @@
+# Dependencies and build outputs
+node_modules/
+dist/
+build/
+coverage/
+
+# Android/Gradle generated files
+android/.gradle/
+android/local.properties
+android/**/build/
+android/app/src/main/assets/www/
+
+# Generated install packages should be distributed as CI/artifacts, not committed
+*.apk
+*.aab
+*.apks
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
