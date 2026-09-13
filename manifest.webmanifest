@@ -1,0 +1,19 @@
+{
+  "name": "Dager Hunter",
+  "short_name": "Dager Hunter",
+  "description": "Offline fantasy hack-and-slash action RPG MVP built for Android-friendly touch play.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#170b25",
+  "theme_color": "#170b25",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

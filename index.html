@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#170b25" />
+    <meta name="description" content="Dager Hunter - offline Android-friendly fantasy hack-and-slash RPG MVP" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Dager Hunter</title>
+  </head>
+  <body>
+    <main id="game-shell" aria-label="Dager Hunter playable game">
+      <canvas id="game-canvas" aria-label="Game view"></canvas>
+
+      <section id="hud" aria-label="Heads up display">
+        <div id="top-left-hud" class="hud-panel">
+          <div class="brand-row">
+            <span class="brand-mark">☾</span>
+            <div>
+              <strong>Dager Hunter</strong>
+              <small id="mode-label">Base</small>
+            </div>
+          </div>
+          <div class="bar-wrap health-wrap" aria-label="Health">
+            <div id="health-bar" class="bar-fill"></div>
+            <span id="health-text" class="bar-text">HP</span>
+          </div>
+          <div class="bar-wrap xp-wrap" aria-label="Experience">
+            <div id="xp-bar" class="bar-fill"></div>
+            <span id="xp-text" class="bar-text">LV 1</span>
+          </div>
+          <div id="currency-line" class="stat-line">Coins 0</div>
+          <div id="run-loot-line" class="stat-line muted">Run loot: none</div>
+        </div>
+
+        <div id="top-right-hud" class="hud-panel">
+          <button id="pause-button" class="hud-button" type="button" aria-label="Pause game">☰</button>
+          <canvas id="minimap" width="156" height="104" aria-label="Minimap"></canvas>
+        </div>
+
+        <div id="enemy-card" class="hud-panel hidden" aria-label="Target enemy">
+          <div class="enemy-title-row">
+            <strong id="enemy-name">Enemy</strong>
+            <span id="enemy-bleed-pill">Bleed 0</span>
+          </div>
+          <div class="bar-wrap enemy-wrap">
+            <div id="enemy-health-bar" class="bar-fill"></div>
+          </div>
+        </div>
+
+        <div id="combo-strip" class="hud-panel">
+          <span id="combo-label">Combo: Light → Light → Heavy → Special</span>
+        </div>
+
+        <div id="ability-row" aria-label="Temporary run abilities"></div>
+        <div id="notifications" aria-live="polite"></div>
+      </section>
+
+      <section id="touch-controls" aria-label="Touch controls">
+        <div id="joystick-zone" aria-label="Movement joystick">
+          <div id="joystick-base">
+            <div id="joystick-knob"></div>
+          </div>
+        </div>
+
+        <div id="button-pad" aria-label="Combat buttons">
+          <button class="game-button block-button" data-action="block" type="button">
+            <span>BLOCK</span><small>PARRY</small>
+          </button>
+          <button class="game-button special-button" data-action="special" type="button">
+            <span>SPECIAL</span><small id="special-cd">READY</small>
+          </button>
+          <button class="game-button heavy-button" data-action="heavy" type="button">
+            <span>HEAVY</span><small>FINISH</small>
+          </button>
+          <button class="game-button light-button" data-action="light" type="button">
+            <span>LIGHT</span><small>COMBO</small>
+          </button>
+          <button class="game-button dash-button" data-action="dash" type="button">
+            <span>DASH</span><small id="dash-cd">READY</small>
+          </button>
+          <button class="game-button interact-button" data-action="interact" type="button">
+            <span id="interact-label">ACT</span><small id="interact-hint">—</small>
+          </button>
+        </div>
+      </section>
+
+      <section id="modal-backdrop" class="hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div id="modal-card">
+          <div class="modal-header">
+            <h2 id="modal-title">Menu</h2>
+            <button id="modal-close" type="button" aria-label="Close menu">×</button>
+          </div>
+          <div id="modal-body"></div>
+          <div id="modal-actions"></div>
+        </div>
+      </section>
+
+      <div id="orientation-tip">Rotate to landscape for the roomiest combat view.</div>
+    </main>
+
+    <noscript>Dager Hunter requires JavaScript to run.</noscript>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
