@@ -56,6 +56,12 @@ The artifact contains:
 DagerHunter-debug.apk
 ```
 
+On the Arena branch, the workflow also publishes a copy at:
+
+```text
+downloadable/DagerHunter-debug.apk
+```
+
 This is a debug/testing APK suitable for direct install after enabling Android's install-from-unknown-sources option.
 
 ### Build locally
