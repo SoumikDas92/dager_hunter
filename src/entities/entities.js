@@ -16,7 +16,8 @@ function nextId(prefix) {
 }
 
 function attackProgress(attack) {
-  return clamp(attack.elapsed / Math.max(0.001, attack.spec.duration ?? 1), 0, 1);
+  const duration = attack.spec.duration !== undefined ? attack.spec.duration : 1;
+  return clamp(attack.elapsed / Math.max(0.001, duration), 0, 1);
 }
 
 export class Particle {
@@ -150,7 +151,8 @@ export class Pickup {
       game.notify(`Coins +${this.amount}`, 'good');
     } else if (this.kind === 'resource') {
       game.addRunResource(this.itemId, this.amount);
-      game.notify(`${RESOURCE_NAMES[this.itemId] ?? this.itemId} +${this.amount}`, 'good');
+      const resourceName = RESOURCE_NAMES[this.itemId] !== undefined ? RESOURCE_NAMES[this.itemId] : this.itemId;
+      game.notify(`${resourceName} +${this.amount}`, 'good');
     } else if (this.kind === 'weapon') {
       game.addRunWeapon(this.weaponId);
       game.notify(`${WEAPONS[this.weaponId].name} found! Extract to keep it.`, 'good');
@@ -226,7 +228,7 @@ export class Projectile {
     this.life -= dt;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
-    game.world?.resolveCollision?.(this);
+    if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
     const player = game.player;
     if (!this.hit && Math.hypot(player.x - this.x, player.y - this.y) < player.radius + this.radius) {
       this.hit = true;
@@ -316,11 +318,11 @@ export class Player {
   }
 
   get weaponRecord() {
-    return this.saveData.equipment.weapons[this.weaponId] ?? { owned: true, level: 1 };
+    return this.saveData.equipment.weapons[this.weaponId] || { owned: true, level: 1 };
   }
 
   get weapon() {
-    return WEAPONS[this.weaponId] ?? WEAPONS.bloodfang;
+    return WEAPONS[this.weaponId] || WEAPONS.bloodfang;
   }
 
   getMaxHealth() {
@@ -370,7 +372,7 @@ export class Player {
     if (this.tempAbilities.some((a) => a.id === ability.id)) return;
     this.tempAbilities.push(ability);
     for (const [key, value] of Object.entries(ability.modifiers)) {
-      this.modifiers[key] = (this.modifiers[key] ?? 0) + value;
+      this.modifiers[key] = (this.modifiers[key] || 0) + value;
     }
   }
 
@@ -420,7 +422,10 @@ export class Player {
       const stats = this.getStats();
       let speed = PLAYER_BASE.moveSpeed;
       if (this.blocking) speed *= 0.48;
-      if (this.attack) speed *= 1 - (this.attack.spec.moveLock ?? 0.65);
+      if (this.attack) {
+        const moveLock = this.attack.spec.moveLock !== undefined ? this.attack.spec.moveLock : 0.65;
+        speed *= 1 - moveLock;
+      }
       const strength = input.strength;
       if (strength > 0.08) {
         const nx = input.x;
@@ -431,7 +436,7 @@ export class Player {
       }
       if (stats.dashCooldown < this.dashCooldown) this.dashCooldown = Math.min(this.dashCooldown, stats.dashCooldown);
     }
-    game.world?.resolveCollision?.(this);
+    if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
   }
 
   tryDash(game) {
@@ -821,7 +826,7 @@ export class Player {
 
 export class Enemy {
   constructor(spawn, game) {
-    const data = ENEMY_TYPES[spawn.type] ?? MINI_BOSSES[spawn.type];
+    const data = ENEMY_TYPES[spawn.type] || MINI_BOSSES[spawn.type];
     if (!data) throw new Error(`Unknown enemy type ${spawn.type}`);
     this.id = nextId('enemy');
     this.type = spawn.type;
@@ -832,7 +837,7 @@ export class Enemy {
     this.y = spawn.y;
     this.homeX = spawn.x;
     this.homeY = spawn.y;
-    this.patrolRadius = spawn.patrolRadius ?? 140;
+    this.patrolRadius = spawn.patrolRadius !== undefined ? spawn.patrolRadius : 140;
     this.radius = data.radius;
     this.maxHp = data.maxHp;
     this.hp = data.maxHp;
@@ -841,7 +846,7 @@ export class Enemy {
     this.dead = false;
     this.facing = Math.random() * TAU;
     this.aggro = this.boss;
-    this.cooldown = game.rng?.range(0.25, 1.4) ?? Math.random();
+    this.cooldown = game.rng && game.rng.range ? game.rng.range(0.25, 1.4) : Math.random();
     this.attack = null;
     this.staggerTimer = 0;
     this.knockX = 0;
@@ -896,7 +901,9 @@ export class Enemy {
     if (this.staggerTimer > 0 && !info.dot) damage *= 1.08;
     this.hp = clamp(this.hp - damage, 0, this.maxHp);
     this.aggro = true;
-    if (info.bleedStacks && source?.id === 'player') this.applyBleed(info.bleedStacks, info.bleedPower ?? 1, game);
+    if (info.bleedStacks && source && source.id === 'player') {
+      this.applyBleed(info.bleedStacks, info.bleedPower !== undefined ? info.bleedPower : 1, game);
+    }
     if (info.knockback && !this.boss) {
       this.knockX += Math.cos(info.angle) * info.knockback;
       this.knockY += Math.sin(info.angle) * info.knockback;
@@ -958,7 +965,7 @@ export class Enemy {
         this.knockX = 0;
         this.knockY = 0;
       }
-      game.world?.resolveCollision?.(this);
+      if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
     }
     if (this.staggerTimer > 0) return;
 
@@ -971,7 +978,7 @@ export class Enemy {
 
     if (this.attack) {
       this.updateAttack(dt, game);
-      game.world?.resolveCollision?.(this);
+      if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
       return;
     }
 
@@ -979,7 +986,8 @@ export class Enemy {
     const dx = player.x - this.x;
     const dy = player.y - this.y;
     const dist = Math.hypot(dx, dy);
-    if (!this.aggro && dist < (this.data.aggroRange ?? 420)) this.aggro = true;
+    const aggroRange = this.data.aggroRange !== undefined ? this.data.aggroRange : 420;
+    if (!this.aggro && dist < aggroRange) this.aggro = true;
 
     if (!this.aggro) {
       this.updateWander(dt, game);
@@ -993,7 +1001,7 @@ export class Enemy {
     }
 
     this.moveCombat(dt, game, dist);
-    game.world?.resolveCollision?.(this);
+    if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
   }
 
   updateStatuses(dt, game) {
@@ -1032,12 +1040,12 @@ export class Enemy {
     this.x += Math.cos(angle) * this.speed * 0.22 * dt;
     this.y += Math.sin(angle) * this.speed * 0.22 * dt;
     this.facing = angle;
-    game.world?.resolveCollision?.(this);
+    if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
   }
 
   chooseAttack(dist, game) {
     const attacks = this.data.attacks;
-    if (!attacks?.length) return null;
+    if (!attacks || !attacks.length) return null;
     const usable = attacks.filter((attack) => dist <= attack.range + (attack.kind === 'melee' || attack.kind === 'triple_melee' ? this.radius + game.player.radius : 0));
     if (!usable.length) return null;
     if (this.boss) {
@@ -1118,8 +1126,9 @@ export class Enemy {
         if (!attack.hitIndexes.has(i) && attack.elapsed >= hitTimes[i]) {
           attack.hitIndexes.add(i);
           this.facing = angleTo(this, player);
-          this.x += Math.cos(this.facing) * (def.dash ?? 60) * 0.17;
-          this.y += Math.sin(this.facing) * (def.dash ?? 60) * 0.17;
+          const dashDistance = def.dash !== undefined ? def.dash : 60;
+          this.x += Math.cos(this.facing) * dashDistance * 0.17;
+          this.y += Math.sin(this.facing) * dashDistance * 0.17;
           this.tryMeleeHit(game, def, 0.75 + i * 0.12);
           game.spawnSlash(this.x, this.y, this.facing, { ...def, range: def.range, arc: def.arc, id: 'enemy_slash' }, def.indicatorColor);
         }
@@ -1150,7 +1159,11 @@ export class Enemy {
         game.spawnShockwave(attack.targetX, attack.targetY, def.areaRadius, def.indicatorColor);
         const dist = Math.hypot(player.x - attack.targetX, player.y - attack.targetY);
         if (dist <= def.areaRadius + player.radius) {
-          player.takeDamage(this.scaledDamage(def), this, game, { kind: 'aoe', label: def.label, knockback: def.knockback ?? 90 });
+          player.takeDamage(this.scaledDamage(def), this, game, {
+            kind: 'aoe',
+            label: def.label,
+            knockback: def.knockback !== undefined ? def.knockback : 90
+          });
         }
       }
     } else if (def.kind === 'charge') {
@@ -1198,7 +1211,7 @@ export class Enemy {
     const dist = Math.hypot(dx, dy);
     if (dist > def.range + player.radius) return false;
     const dir = Math.atan2(dy, dx);
-    const arc = def.arc ?? 1.2;
+    const arc = def.arc !== undefined ? def.arc : 1.2;
     if (Math.abs(angleDiff(dir, this.facing)) > arc / 2) return false;
     player.takeDamage(this.scaledDamage(def) * mult, this, game, { kind: 'melee', label: def.label, knockback: def.knockback });
     return true;
@@ -1244,7 +1257,8 @@ export class Enemy {
       ctx.rotate(this.facing);
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.arc(0, 0, def.range, -(def.arc ?? 1.2) / 2, (def.arc ?? 1.2) / 2);
+      const arc = def.arc !== undefined ? def.arc : 1.2;
+      ctx.arc(0, 0, def.range, -arc / 2, arc / 2);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();

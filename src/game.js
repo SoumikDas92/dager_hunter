@@ -127,7 +127,7 @@ export class Game {
     this.contextAction = this.computeContextAction();
     if (this.input.consume('interact')) this.performContextAction();
 
-    if (this.world?.kind === 'hunt') this.world.markDiscovered(this.player, this);
+    if (this.world && this.world.kind === 'hunt') this.world.markDiscovered(this.player, this);
 
     this.player.update(dt, this);
 
@@ -349,7 +349,7 @@ export class Game {
   openBlacksmith() {
     const save = this.save.data;
     const equipped = save.equipment.equippedWeapon;
-    const record = save.equipment.weapons[equipped] ?? { level: 1 };
+    const record = save.equipment.weapons[equipped] || { level: 1 };
     const cost = weaponUpgradeCost(record.level);
     const can = this.canPay(cost);
     const weaponCards = Object.entries(save.equipment.weapons)
@@ -405,7 +405,10 @@ export class Game {
     const save = this.save.data;
     const resources = Object.entries(save.wallet.resources)
       .filter(([, amount]) => amount > 0)
-      .map(([id, amount]) => `<span class="pill">${RESOURCE_NAMES[id] ?? id} ×${amount}</span>`)
+      .map(([id, amount]) => {
+        const name = RESOURCE_NAMES[id] !== undefined ? RESOURCE_NAMES[id] : id;
+        return `<span class="pill">${name} ×${amount}</span>`;
+      })
       .join('') || '<span class="muted">No secured resources yet.</span>';
     const stats = save.player.stats;
     const body = `<div class="modal-grid">
@@ -487,7 +490,7 @@ export class Game {
     const wallet = this.save.data.wallet;
     for (const [id, amount] of Object.entries(cost)) {
       if (!amount) continue;
-      const owned = id === 'coins' ? wallet.coins : wallet.resources[id] ?? 0;
+      const owned = id === 'coins' ? wallet.coins : wallet.resources[id] || 0;
       if (owned < amount) return false;
     }
     return true;
@@ -499,7 +502,7 @@ export class Game {
     for (const [id, amount] of Object.entries(cost)) {
       if (!amount) continue;
       if (id === 'coins') wallet.coins -= amount;
-      else wallet.resources[id] = (wallet.resources[id] ?? 0) - amount;
+      else wallet.resources[id] = (wallet.resources[id] || 0) - amount;
     }
     return true;
   }
@@ -508,9 +511,10 @@ export class Game {
     return Object.entries(cost)
       .filter(([, amount]) => amount > 0)
       .map(([id, amount]) => {
-        const owned = id === 'coins' ? this.save.data.wallet.coins : this.save.data.wallet.resources[id] ?? 0;
+        const owned = id === 'coins' ? this.save.data.wallet.coins : this.save.data.wallet.resources[id] || 0;
         const cls = owned >= amount ? 'cost-ok' : 'cost-missing';
-        return `<span class="pill ${cls}">${RESOURCE_NAMES[id] ?? id} ${owned}/${amount}</span>`;
+        const name = RESOURCE_NAMES[id] !== undefined ? RESOURCE_NAMES[id] : id;
+        return `<span class="pill ${cls}">${name} ${owned}/${amount}</span>`;
       })
       .join('');
   }
@@ -538,7 +542,7 @@ export class Game {
   }
 
   equipWeapon(id) {
-    if (!this.save.data.equipment.weapons[id]?.owned) return;
+    if (!this.save.data.equipment.weapons[id] || !this.save.data.equipment.weapons[id].owned) return;
     this.save.data.equipment.equippedWeapon = id;
     this.player.syncFromSave(this.save.data, true);
     this.save.save();
@@ -570,7 +574,7 @@ export class Game {
         kind: 'resource',
         id,
         amount: this.rng.int(1, chest.dangerous ? 3 : 2),
-        color: RESOURCE_COLORS[id] ?? '#ffecc7'
+        color: RESOURCE_COLORS[id] || '#ffecc7'
       });
     }
     if (this.rng.chance(chest.dangerous ? 0.3 : 0.12)) {
@@ -625,7 +629,7 @@ export class Game {
 
   addRunResource(id, amount) {
     if (!this.run) return;
-    this.run.tempResources[id] = (this.run.tempResources[id] ?? 0) + Math.max(0, Math.floor(amount));
+    this.run.tempResources[id] = (this.run.tempResources[id] || 0) + Math.max(0, Math.floor(amount));
   }
 
   addRunWeapon(id) {
@@ -645,14 +649,15 @@ export class Game {
       return;
     }
 
-    this.addRunXp(enemy.data.xp ?? 0);
+    this.addRunXp(enemy.data.xp !== undefined ? enemy.data.xp : 0);
     this.dropLoot(enemy);
     if (enemy.boss) {
       this.run.bossDefeated = true;
       this.world.unlockBossExit();
       this.notify(`${enemy.name} defeated! Escape portal opened.`, 'parry');
       this.flash('#ffd166', 0.32);
-      if (this.rng.chance(enemy.data.weaponChance ?? 0.3)) {
+      const weaponChance = enemy.data.weaponChance !== undefined ? enemy.data.weaponChance : 0.3;
+      if (this.rng.chance(weaponChance)) {
         const weaponId = this.randomWeaponDrop();
         this.spawnPickup(enemy.x, enemy.y, { kind: 'weapon', weaponId, color: RARITY[WEAPONS[weaponId].rarity].color });
       }
@@ -660,16 +665,17 @@ export class Game {
   }
 
   dropLoot(enemy) {
-    const [coinMin, coinMax] = enemy.data.coinDrop ?? [0, 0];
+    const coinDrop = enemy.data.coinDrop || [0, 0];
+    const [coinMin, coinMax] = coinDrop;
     const coins = this.rng.int(coinMin, coinMax);
     if (coins > 0) this.spawnPickup(enemy.x, enemy.y, { kind: 'coins', amount: coins, color: '#ffd166' });
-    for (const drop of enemy.data.drops ?? []) {
+    for (const drop of enemy.data.drops || []) {
       if (this.rng.chance(drop.chance)) {
         this.spawnPickup(enemy.x, enemy.y, {
           kind: 'resource',
           id: drop.id,
           amount: this.rng.int(drop.min, drop.max),
-          color: RESOURCE_COLORS[drop.id] ?? '#ffecc7'
+          color: RESOURCE_COLORS[drop.id] || '#ffecc7'
         });
       }
     }
@@ -730,7 +736,7 @@ export class Game {
 
     this.save.data.wallet.coins += securedCoins;
     for (const [id, amount] of Object.entries(securedResources)) {
-      this.save.data.wallet.resources[id] = (this.save.data.wallet.resources[id] ?? 0) + amount;
+      this.save.data.wallet.resources[id] = (this.save.data.wallet.resources[id] || 0) + amount;
     }
     const levelUps = this.grantPermanentXp(securedXp);
     const weaponMessages = securedWeapons.map((id) => this.secureWeapon(id));
@@ -775,7 +781,7 @@ export class Game {
     const weapon = WEAPONS[id];
     if (!weapon) return '';
     const equipment = this.save.data.equipment;
-    if (equipment.weapons[id]?.owned) {
+    if (equipment.weapons[id] && equipment.weapons[id].owned) {
       const fragments = Math.max(2, RARITY[weapon.rarity].value + 1);
       this.save.data.wallet.resources.weapon_fragments += fragments;
       return `Duplicate ${weapon.name} converted to Weapon Fragments ×${fragments}.`;
@@ -822,12 +828,12 @@ export class Game {
   }
 
   spawnSlash(x, y, facing, spec, overrideColor = null) {
-    const color = overrideColor ?? (spec.id === 'counter' ? '#fff2a8' : spec.id === 'special' ? '#e52c59' : '#ffecc7');
+    const color = overrideColor !== null && overrideColor !== undefined ? overrideColor : spec.id === 'counter' ? '#fff2a8' : spec.id === 'special' ? '#e52c59' : '#ffecc7';
     const amount = spec.id === 'special' ? 14 : 7;
     for (let i = 0; i < amount; i += 1) {
       const spread = spec.arc >= TAU - 0.1 ? TAU : spec.arc;
       const a = facing - spread / 2 + (spread * (i + 0.5)) / amount;
-      const r = (spec.range ?? 70) * (0.45 + Math.random() * 0.45);
+      const r = (spec.range !== undefined ? spec.range : 70) * (0.45 + Math.random() * 0.45);
       this.addParticle(
         new Particle({
           x: x + Math.cos(a) * r,
@@ -925,7 +931,7 @@ export class Game {
     if (!this.contextAction) return;
     const target = this.contextAction.target;
     const x = target.x + (target.w ? target.w / 2 : 0);
-    const y = target.y - (target.r ?? 34) - 18;
+    const y = target.y - (target.r !== undefined ? target.r : 34) - 18;
     ctx.save();
     drawOutlinedText(ctx, `ACT: ${this.contextAction.label}`, x, y, { size: 14, color: '#ffd166', width: 4 });
     ctx.restore();

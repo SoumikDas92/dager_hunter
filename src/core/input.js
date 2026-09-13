@@ -5,9 +5,10 @@ export class InputManager {
     this.onFirstInput = onFirstInput;
     this.firstInputSent = false;
     this.move = { x: 0, y: 0, strength: 0 };
-    this.actions = Object.fromEntries(
-      ACTIONS.map((action) => [action, { down: false, presses: 0, releases: 0 }])
-    );
+    this.actions = {};
+    ACTIONS.forEach((action) => {
+      this.actions[action] = { down: false, presses: 0, releases: 0 };
+    });
     this.keys = new Set();
     this.joystickPointerId = null;
     this.joystickCenter = { x: 0, y: 0 };
@@ -142,7 +143,7 @@ export class InputManager {
   unlockOnce() {
     if (this.firstInputSent) return;
     this.firstInputSent = true;
-    this.onFirstInput?.();
+    if (this.onFirstInput) this.onFirstInput();
   }
 
   updateJoystick(clientX, clientY) {
@@ -179,7 +180,7 @@ export class InputManager {
   }
 
   isDown(action) {
-    return Boolean(this.actions[action]?.down);
+    return Boolean(this.actions[action] && this.actions[action].down);
   }
 
   endFrame() {

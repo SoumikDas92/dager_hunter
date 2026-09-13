@@ -324,8 +324,7 @@ export class BaseWorld {
     ctx.save();
     ctx.fillStyle = '#15100d';
     ctx.beginPath();
-    ctx.roundRect?.(x - r * 0.15, y + r * 0.1, r * 0.3, r * 0.92, 8);
-    if (!ctx.roundRect) drawRoundedRect(ctx, x - r * 0.15, y + r * 0.1, r * 0.3, r * 0.92, 8);
+    drawRoundedRect(ctx, x - r * 0.15, y + r * 0.1, r * 0.3, r * 0.92, 8);
     ctx.fill();
     ctx.beginPath();
     ctx.ellipse(x, y, r * 0.88, r * 0.72, 0, 0, Math.PI * 2);
@@ -465,7 +464,7 @@ export class ProceduralForest {
     }
     // Ensure at least one temporary ability source per hunt.
     if (!this.shrines.length) {
-      const room = this.rooms.find((r) => r.id === 'path-3') ?? this.rooms[2];
+      const room = this.rooms.find((r) => r.id === 'path-3') || this.rooms[2];
       this.shrines.push({ id: 'shrine-guaranteed', x: room.x, y: room.y - room.h * 0.24, used: false, roomId: room.id });
     }
 
@@ -502,7 +501,7 @@ export class ProceduralForest {
     for (const room of this.rooms) {
       if (room.type === 'hunter_camp') continue;
       if (room.type === 'boss_grove') continue;
-      const depth = clamp(room.danger ?? 0.2, 0, 1);
+      const depth = clamp(room.danger !== undefined ? room.danger : 0.2, 0, 1);
       let count = room.secret ? rng.int(2, 4) : rng.int(1, 2 + Math.floor(depth * 3));
       if (room.secret) count += 1;
       for (let i = 0; i < count; i += 1) {

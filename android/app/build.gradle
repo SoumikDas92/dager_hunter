@@ -8,10 +8,10 @@ android {
 
     defaultConfig {
         applicationId 'com.soumikdas92.dagerhunter'
-        minSdk 23
+        minSdk 21
         targetSdk 35
-        versionCode 1
-        versionName '0.1.0'
+        versionCode 2
+        versionName '0.1.1'
     }
 
     buildFeatures {
@@ -20,27 +20,27 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.webkit:webkit:1.10.0'
+    // No runtime dependencies: the APK is a tiny native WebView shell around the bundled game.
 }
 
 // Keep the browser/PWA source as the single source of truth.
-// The APK build copies it into Android assets at build time.
+// The APK build copies the single-file game bundle into Android assets at build time.
 def webAssetOutput = layout.projectDirectory.dir('src/main/assets/www')
 
 tasks.register('syncWebAssets', Copy) {
-    description = 'Copies the HTML5 game into the Android WebView assets directory.'
+    description = 'Copies the offline single-file game into the Android WebView assets directory.'
     group = 'build setup'
 
+    doFirst {
+        delete webAssetOutput
+    }
+
     from(rootProject.projectDir.parentFile) {
-        include 'index.html'
-        include 'styles.css'
-        include 'manifest.webmanifest'
-        include 'sw.js'
-        include 'assets/**'
-        include 'src/**'
-        exclude '**/.git/**'
-        exclude 'android/**'
-        exclude 'node_modules/**'
+        include 'downloadable/DagerHunter-PC.html'
+        eachFile { details ->
+            details.path = details.name
+        }
+        includeEmptyDirs = false
     }
 
     into webAssetOutput

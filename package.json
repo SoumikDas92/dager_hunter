@@ -6,9 +6,10 @@
   "description": "Android-friendly offline fantasy hack-and-slash action RPG playable MVP.",
   "scripts": {
     "start": "python3 -m http.server 5173 --bind 0.0.0.0",
-    "check": "node --check src/main.js && node --check src/game.js && node --check src/core/audio.js && node --check src/core/input.js && node --check src/core/save-system.js && node --check src/core/utils.js && node --check src/data/content.js && node --check src/entities/entities.js && node --check src/systems/procedural-forest.js && node --check src/ui/ui.js",
-    "android:copy-assets": "cd android && gradle --no-daemon syncWebAssets",
-    "android:apk": "cd android && gradle --no-daemon assembleDebug"
+    "check": "node --check src/main.js && node --check src/game.js && node --check src/core/audio.js && node --check src/core/input.js && node --check src/core/save-system.js && node --check src/core/utils.js && node --check src/data/content.js && node --check src/entities/entities.js && node --check src/systems/procedural-forest.js && node --check src/ui/ui.js && node --check tools/build-single-file.js",
+    "pc:build": "node tools/build-single-file.js",
+    "android:copy-assets": "npm run pc:build && cd android && gradle --no-daemon syncWebAssets",
+    "android:apk": "npm run pc:build && cd android && gradle --no-daemon assembleDebug"
   },
   "keywords": [
     "android",

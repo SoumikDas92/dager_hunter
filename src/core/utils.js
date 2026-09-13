@@ -88,7 +88,7 @@ export function formatResources(resources, names = {}) {
   const entries = Object.entries(resources || {}).filter(([, qty]) => qty > 0);
   if (!entries.length) return 'none';
   return entries
-    .map(([id, qty]) => `${names[id] || id.replaceAll('_', ' ')} ×${qty}`)
+    .map(([id, qty]) => `${names[id] || id.replace(/_/g, ' ')} ×${qty}`)
     .join(', ');
 }
 
@@ -147,7 +147,7 @@ export class RNG {
       roll -= entry.weight;
       if (roll <= 0) return entry.value;
     }
-    return entries[entries.length - 1]?.value;
+    return entries.length ? entries[entries.length - 1].value : undefined;
   }
 }
 

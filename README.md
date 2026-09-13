@@ -26,8 +26,21 @@ Playable MVP/prototype of an Android-friendly offline fantasy hack-and-slash act
 - Data-driven architecture for adding more regions, monsters, bosses, weapons, abilities, cosmetics, and base buildings later.
 - PWA manifest and service worker for offline-friendly browser deployment.
 - Native Android WebView wrapper source for building a downloadable APK.
+- Single-file PC browser build that runs by double-clicking the HTML file.
 
-## Run locally in a browser
+## Run on PC
+
+### Easiest PC version
+
+Download or open:
+
+```text
+downloadable/DagerHunter-PC.html
+```
+
+Then double-click it. It runs locally in a desktop browser, with no server and no internet required.
+
+### Developer browser version
 
 ```bash
 npm start
@@ -35,11 +48,23 @@ npm start
 
 Then open `http://localhost:5173`.
 
-No build step or online service is required for the browser/PWA version.
+## Build the PC single-file version
+
+```bash
+npm run pc:build
+```
+
+Output:
+
+```text
+downloadable/DagerHunter-PC.html
+```
 
 ## Android APK
 
-The `android/` folder contains a native Android WebView wrapper that bundles the HTML/CSS/JS game inside the APK, so the installed game does **not** need an internet connection.
+The `android/` folder contains a native Android WebView wrapper that bundles the game inside the APK, so the installed game does **not** need an internet connection.
+
+The Android wrapper now loads the same single-file HTML bundle used by the PC version. This avoids older Android WebView problems with ES modules and asset interception.
 
 ### Build with GitHub Actions
 

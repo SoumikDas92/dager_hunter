@@ -69,12 +69,12 @@ export class UIManager {
     for (const action of actions) {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = `modal-button ${action.className ?? ''}`.trim();
-      button.innerHTML = action.html ?? action.label;
+      button.className = `modal-button ${action.className || ''}`.trim();
+      button.innerHTML = action.html !== undefined ? action.html : action.label;
       button.disabled = Boolean(action.disabled);
       button.addEventListener('click', () => {
         this.game.audio.play('ui');
-        action.onClick?.();
+        if (action.onClick) action.onClick();
       });
       this.elements.modalActions.append(button);
     }
@@ -91,7 +91,7 @@ export class UIManager {
     const game = this.game;
     const player = game.player;
     const save = game.save.data;
-    this.elements.mode.textContent = game.mode === 'hunt' ? `Forest Hunt · ${game.run?.seedLabel ?? ''}` : 'Base';
+    this.elements.mode.textContent = game.mode === 'hunt' ? `Forest Hunt · ${game.run ? game.run.seedLabel : ''}` : 'Base';
 
     const hpPct = clamp(player.health / player.maxHealth, 0, 1);
     this.elements.hpBar.style.width = `${hpPct * 100}%`;
@@ -103,7 +103,8 @@ export class UIManager {
     this.elements.xpText.textContent = `LV ${save.player.level} · XP ${save.player.xp}/${next}`;
 
     const weapon = WEAPONS[save.equipment.equippedWeapon];
-    this.elements.currency.textContent = `Coins ${save.wallet.coins} · ${weapon.name} +${save.equipment.weapons[weapon.id]?.level ?? 1}`;
+    const equippedRecord = save.equipment.weapons[weapon.id];
+    this.elements.currency.textContent = `Coins ${save.wallet.coins} · ${weapon.name} +${equippedRecord ? equippedRecord.level : 1}`;
 
     if (game.mode === 'hunt') {
       const run = game.run;
@@ -133,7 +134,7 @@ export class UIManager {
     const expired = this.game.time > player.comboExpire;
     const step = expired ? 0 : player.comboStep;
     const labels = ['LIGHT', 'LIGHT', 'HEAVY', 'SPECIAL'];
-    const next = labels[Math.min(step, labels.length - 1)] ?? 'LIGHT';
+    const next = labels[Math.min(step, labels.length - 1)] || 'LIGHT';
     let detail = 'Light → Light → Heavy → Special';
     if (step === 1) detail = '<strong>Light</strong> → HEAVY → Special';
     if (step === 2) detail = '<strong>Heavy Finisher</strong> → Special';

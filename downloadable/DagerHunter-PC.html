@@ -1,0 +1,5736 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#170b25" />
+    <meta name="description" content="Dager Hunter - offline PC/Android single-file build" />
+    <title>Dager Hunter PC</title>
+    <style>
+:root {
+  color-scheme: dark;
+  --ink: #130b1f;
+  --panel: rgba(24, 11, 37, 0.78);
+  --panel-strong: rgba(24, 11, 37, 0.94);
+  --line: rgba(255, 255, 255, 0.18);
+  --cream: #ffecc7;
+  --muted: #bca9cf;
+  --blood: #e52c59;
+  --blood-dark: #7e1233;
+  --gold: #ffd166;
+  --cyan: #70e8ff;
+  --green: #8cff7e;
+  --shadow: rgba(0, 0, 0, 0.45);
+  font-family: Inter, ui-rounded, "Trebuchet MS", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  user-select: none;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, #3a1d4d 0%, #150a22 58%, #07040b 100%);
+}
+
+button {
+  font: inherit;
+}
+
+#game-shell {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #170b25;
+}
+
+#game-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #24422e;
+}
+
+#hud,
+#touch-controls,
+#modal-backdrop,
+#orientation-tip {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hud-panel {
+  pointer-events: auto;
+  border: 2px solid rgba(255, 236, 199, 0.16);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(28, 13, 46, 0.88), rgba(77, 22, 61, 0.58));
+  box-shadow: 0 10px 30px var(--shadow), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+}
+
+#top-left-hud {
+  position: absolute;
+  left: max(10px, env(safe-area-inset-left));
+  top: max(10px, env(safe-area-inset-top));
+  width: min(360px, calc(100vw - 20px));
+  padding: 10px 12px 11px;
+}
+
+.brand-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--cream);
+  text-shadow: 0 2px 0 #000;
+  letter-spacing: 0.02em;
+  margin-bottom: 8px;
+}
+
+.brand-row small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: #e52c59;
+  color: white;
+  font-size: 22px;
+  border: 2px solid #0b0612;
+  box-shadow: 0 3px 0 #000, 0 0 18px rgba(229, 44, 89, 0.45);
+}
+
+.bar-wrap {
+  position: relative;
+  height: 18px;
+  overflow: hidden;
+  border: 2px solid #09050e;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.38);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55);
+}
+
+.bar-wrap + .bar-wrap {
+  margin-top: 6px;
+}
+
+.bar-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  transform-origin: left center;
+  transition: width 120ms ease-out;
+}
+
+.health-wrap .bar-fill {
+  background: linear-gradient(90deg, #ff315f, #ff8aa3);
+  box-shadow: 0 0 16px rgba(255, 49, 95, 0.55);
+}
+
+.xp-wrap .bar-fill {
+  background: linear-gradient(90deg, #6c5cff, #70e8ff);
+}
+
+.enemy-wrap .bar-fill {
+  background: linear-gradient(90deg, #ffb703, #fb5607);
+}
+
+.bar-text {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  text-shadow: 0 1px 2px #000, 0 0 3px #000;
+}
+
+.stat-line {
+  margin-top: 7px;
+  font-size: 12px;
+  color: var(--cream);
+  text-shadow: 0 1px 0 #000;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+#top-right-hud {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+#pause-button,
+#modal-close,
+.hud-button {
+  pointer-events: auto;
+  border: 2px solid #08040d;
+  border-radius: 14px;
+  min-width: 44px;
+  min-height: 40px;
+  color: var(--cream);
+  background: linear-gradient(#50306d, #251238);
+  box-shadow: 0 4px 0 #050309, 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+#pause-button:active,
+#modal-close:active,
+.game-button:active {
+  transform: translateY(2px) scale(0.98);
+  box-shadow: 0 2px 0 #050309, 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+#minimap {
+  width: 156px;
+  height: 104px;
+  border-radius: 12px;
+  border: 2px solid #0a0710;
+  background: rgba(13, 8, 20, 0.72);
+}
+
+#enemy-card {
+  position: absolute;
+  left: 50%;
+  top: max(12px, env(safe-area-inset-top));
+  transform: translateX(-50%);
+  width: min(360px, 42vw);
+  padding: 10px;
+}
+
+.enemy-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  color: var(--cream);
+  font-size: 13px;
+  text-shadow: 0 1px 0 #000;
+}
+
+#enemy-bleed-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(229, 44, 89, 0.32);
+  color: #ffc4d1;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+#combo-strip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(118px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  color: var(--cream);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 0 #000;
+  white-space: nowrap;
+}
+
+#ability-row {
+  position: absolute;
+  left: 50%;
+  top: calc(76px + env(safe-area-inset-top));
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 48vw;
+}
+
+.ability-chip {
+  pointer-events: none;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  background: rgba(26, 12, 42, 0.78);
+  color: var(--cream);
+  font-size: 11px;
+  font-weight: 800;
+  text-shadow: 0 1px 0 #000;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+#notifications {
+  position: absolute;
+  left: 50%;
+  bottom: calc(175px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  width: min(520px, 80vw);
+}
+
+.toast {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  background: rgba(17, 8, 29, 0.86);
+  color: var(--cream);
+  font-size: 13px;
+  font-weight: 800;
+  text-shadow: 0 1px 0 #000;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.4);
+  animation: toast-in 180ms ease-out;
+}
+
+.toast.good {
+  border-color: rgba(140, 255, 126, 0.45);
+}
+
+.toast.danger {
+  border-color: rgba(255, 49, 95, 0.55);
+}
+
+.toast.parry {
+  color: #fff9d6;
+  border-color: rgba(255, 209, 102, 0.8);
+  box-shadow: 0 0 24px rgba(255, 209, 102, 0.35), 0 8px 26px rgba(0, 0, 0, 0.45);
+}
+
+@keyframes toast-in {
+  from { transform: translateY(8px) scale(0.94); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+#touch-controls {
+  z-index: 5;
+}
+
+#joystick-zone {
+  pointer-events: auto;
+  position: absolute;
+  left: max(18px, env(safe-area-inset-left));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: min(42vw, 220px);
+  height: min(42vw, 220px);
+}
+
+#joystick-base {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 132px;
+  height: 132px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 3px solid rgba(255, 236, 199, 0.22);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12), rgba(21, 9, 34, 0.62));
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.5), 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+#joystick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 56px;
+  height: 56px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 3px solid #0b0612;
+  background: linear-gradient(#ffecb8, #f77f8e 48%, #953153);
+  box-shadow: 0 5px 0 #060309, 0 0 22px rgba(255, 49, 95, 0.34);
+}
+
+#button-pad {
+  pointer-events: auto;
+  position: absolute;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  width: min(48vw, 315px);
+  height: 205px;
+}
+
+.game-button {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  grid-template-rows: 1fr auto;
+  border: 3px solid #07040b;
+  border-radius: 50%;
+  color: #fff7df;
+  text-shadow: 0 2px 0 #000;
+  font-weight: 950;
+  letter-spacing: 0.02em;
+  box-shadow: 0 5px 0 #050309, 0 10px 28px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+}
+
+.game-button span {
+  pointer-events: none;
+  align-self: end;
+}
+
+.game-button small {
+  pointer-events: none;
+  align-self: start;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.game-button.cooling {
+  filter: grayscale(0.25) brightness(0.72);
+}
+
+.game-button.disabled {
+  opacity: 0.52;
+}
+
+.light-button {
+  right: 72px;
+  bottom: 44px;
+  width: 84px;
+  height: 84px;
+  background: radial-gradient(circle at 35% 28%, #fff2ba, #ff395f 55%, #8d1236 100%);
+}
+
+.heavy-button {
+  right: 153px;
+  bottom: 82px;
+  width: 73px;
+  height: 73px;
+  background: radial-gradient(circle at 35% 28%, #ffe8a3, #fb8500 55%, #6f2d00 100%);
+}
+
+.special-button {
+  right: 12px;
+  bottom: 106px;
+  width: 78px;
+  height: 78px;
+  background: radial-gradient(circle at 35% 28%, #f7d9ff, #8f4dff 55%, #32105b 100%);
+}
+
+.block-button {
+  right: 176px;
+  bottom: 8px;
+  width: 74px;
+  height: 74px;
+  background: radial-gradient(circle at 35% 28%, #d7fbff, #278ac7 55%, #13364c 100%);
+}
+
+.dash-button {
+  right: 6px;
+  bottom: 14px;
+  width: 67px;
+  height: 67px;
+  background: radial-gradient(circle at 35% 28%, #c7fff6, #18c4a7 55%, #0a4b44 100%);
+}
+
+.interact-button {
+  right: 242px;
+  bottom: 66px;
+  width: 66px;
+  height: 66px;
+  background: radial-gradient(circle at 35% 28%, #fff0b8, #ffd166 55%, #7d4c06 100%);
+}
+
+#modal-backdrop {
+  display: grid;
+  place-items: center;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  z-index: 20;
+  background: rgba(5, 2, 10, 0.56);
+  backdrop-filter: blur(5px);
+  pointer-events: auto;
+}
+
+#modal-card {
+  width: min(680px, 94vw);
+  max-height: min(86vh, 760px);
+  overflow: auto;
+  touch-action: pan-y;
+  border: 3px solid rgba(255, 236, 199, 0.22);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(36, 16, 58, 0.98), rgba(21, 9, 34, 0.98));
+  color: var(--cream);
+  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 10px;
+  background: linear-gradient(rgba(36, 16, 58, 0.98), rgba(36, 16, 58, 0.9));
+}
+
+#modal-title {
+  margin: 0;
+  font-size: 22px;
+  text-shadow: 0 2px 0 #000;
+}
+
+#modal-close {
+  font-size: 26px;
+  line-height: 1;
+  min-width: 42px;
+  min-height: 38px;
+}
+
+#modal-body {
+  padding: 10px 18px 12px;
+  line-height: 1.45;
+  touch-action: pan-y;
+}
+
+#modal-body * {
+  touch-action: pan-y;
+}
+
+#modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0 18px 18px;
+}
+
+.modal-button,
+.choice-card {
+  pointer-events: auto;
+  touch-action: manipulation;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 12px 14px;
+  color: var(--cream);
+  background: linear-gradient(#603a7f, #301948);
+  box-shadow: 0 4px 0 #08040d, 0 8px 18px rgba(0, 0, 0, 0.32);
+  font-weight: 850;
+  text-align: left;
+}
+
+.modal-button.primary {
+  background: linear-gradient(#ff596f, #8d1236);
+}
+
+.modal-button.good {
+  background: linear-gradient(#43c466, #186d36);
+}
+
+.modal-button.warn {
+  background: linear-gradient(#ffb703, #8a4d00);
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.card-list {
+  display: grid;
+  gap: 10px;
+}
+
+.info-card,
+.weapon-card,
+.resource-card {
+  padding: 12px;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.weapon-card.equipped {
+  border-color: rgba(255, 209, 102, 0.75);
+  box-shadow: 0 0 18px rgba(255, 209, 102, 0.16);
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  margin: 2px 3px 2px 0;
+  border-radius: 999px;
+  color: white;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cost-ok { color: #a5ff9b; }
+.cost-missing { color: #ff9bb0; }
+
+.hidden {
+  display: none !important;
+}
+
+#orientation-tip {
+  inset: auto 10px calc(8px + env(safe-area-inset-bottom)) 10px;
+  display: none;
+  text-align: center;
+  color: rgba(255, 236, 199, 0.7);
+  font-size: 11px;
+  text-shadow: 0 1px 0 #000;
+}
+
+@media (orientation: portrait) and (max-width: 740px) {
+  #orientation-tip {
+    display: block;
+  }
+
+  #top-left-hud {
+    width: calc(100vw - 130px);
+  }
+
+  #enemy-card {
+    top: 118px;
+    width: min(360px, 82vw);
+  }
+
+  #top-right-hud {
+    transform: scale(0.88);
+    transform-origin: top right;
+  }
+
+  #combo-strip {
+    display: none;
+  }
+
+  #ability-row {
+    top: 118px;
+    max-width: 86vw;
+  }
+
+  #joystick-zone {
+    width: 45vw;
+    height: 45vw;
+  }
+
+  #button-pad {
+    width: 52vw;
+    transform: scale(0.88);
+    transform-origin: bottom right;
+  }
+}
+
+@media (max-height: 520px) {
+  #top-left-hud {
+    transform: scale(0.82);
+    transform-origin: top left;
+  }
+
+  #top-right-hud {
+    transform: scale(0.8);
+    transform-origin: top right;
+  }
+
+  #combo-strip,
+  #notifications {
+    transform: translateX(-50%) scale(0.88);
+  }
+
+  #joystick-zone {
+    transform: scale(0.88);
+    transform-origin: bottom left;
+  }
+
+  #button-pad {
+    transform: scale(0.88);
+    transform-origin: bottom right;
+  }
+}
+
+    </style>
+  </head>
+  <body>
+<main id="game-shell" aria-label="Dager Hunter playable game">
+      <canvas id="game-canvas" aria-label="Game view"></canvas>
+
+      <section id="hud" aria-label="Heads up display">
+        <div id="top-left-hud" class="hud-panel">
+          <div class="brand-row">
+            <span class="brand-mark">☾</span>
+            <div>
+              <strong>Dager Hunter</strong>
+              <small id="mode-label">Base</small>
+            </div>
+          </div>
+          <div class="bar-wrap health-wrap" aria-label="Health">
+            <div id="health-bar" class="bar-fill"></div>
+            <span id="health-text" class="bar-text">HP</span>
+          </div>
+          <div class="bar-wrap xp-wrap" aria-label="Experience">
+            <div id="xp-bar" class="bar-fill"></div>
+            <span id="xp-text" class="bar-text">LV 1</span>
+          </div>
+          <div id="currency-line" class="stat-line">Coins 0</div>
+          <div id="run-loot-line" class="stat-line muted">Run loot: none</div>
+        </div>
+
+        <div id="top-right-hud" class="hud-panel">
+          <button id="pause-button" class="hud-button" type="button" aria-label="Pause game">☰</button>
+          <canvas id="minimap" width="156" height="104" aria-label="Minimap"></canvas>
+        </div>
+
+        <div id="enemy-card" class="hud-panel hidden" aria-label="Target enemy">
+          <div class="enemy-title-row">
+            <strong id="enemy-name">Enemy</strong>
+            <span id="enemy-bleed-pill">Bleed 0</span>
+          </div>
+          <div class="bar-wrap enemy-wrap">
+            <div id="enemy-health-bar" class="bar-fill"></div>
+          </div>
+        </div>
+
+        <div id="combo-strip" class="hud-panel">
+          <span id="combo-label">Combo: Light → Light → Heavy → Special</span>
+        </div>
+
+        <div id="ability-row" aria-label="Temporary run abilities"></div>
+        <div id="notifications" aria-live="polite"></div>
+      </section>
+
+      <section id="touch-controls" aria-label="Touch controls">
+        <div id="joystick-zone" aria-label="Movement joystick">
+          <div id="joystick-base">
+            <div id="joystick-knob"></div>
+          </div>
+        </div>
+
+        <div id="button-pad" aria-label="Combat buttons">
+          <button class="game-button block-button" data-action="block" type="button">
+            <span>BLOCK</span><small>PARRY</small>
+          </button>
+          <button class="game-button special-button" data-action="special" type="button">
+            <span>SPECIAL</span><small id="special-cd">READY</small>
+          </button>
+          <button class="game-button heavy-button" data-action="heavy" type="button">
+            <span>HEAVY</span><small>FINISH</small>
+          </button>
+          <button class="game-button light-button" data-action="light" type="button">
+            <span>LIGHT</span><small>COMBO</small>
+          </button>
+          <button class="game-button dash-button" data-action="dash" type="button">
+            <span>DASH</span><small id="dash-cd">READY</small>
+          </button>
+          <button class="game-button interact-button" data-action="interact" type="button">
+            <span id="interact-label">ACT</span><small id="interact-hint">—</small>
+          </button>
+        </div>
+      </section>
+
+      <section id="modal-backdrop" class="hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div id="modal-card">
+          <div class="modal-header">
+            <h2 id="modal-title">Menu</h2>
+            <button id="modal-close" type="button" aria-label="Close menu">×</button>
+          </div>
+          <div id="modal-body"></div>
+          <div id="modal-actions"></div>
+        </div>
+      </section>
+
+      <div id="orientation-tip">Rotate to landscape for the roomiest combat view.</div>
+    </main>
+
+    <noscript>Dager Hunter requires JavaScript to run.</noscript>
+    <script>
+window.__DAGER_HUNTER_SINGLE_FILE__ = true;
+(function () {
+'use strict';
+// Begin src/core/utils.js
+const TAU = Math.PI * 2;
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function inverseLerp(a, b, v) {
+  if (a === b) return 0;
+  return clamp((v - a) / (b - a), 0, 1);
+}
+
+function smoothstep(t) {
+  t = clamp(t, 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function distanceSq(a, b) {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return dx * dx + dy * dy;
+}
+
+function angleTo(a, b) {
+  return Math.atan2(b.y - a.y, b.x - a.x);
+}
+
+function angleDiff(a, b) {
+  let d = ((a - b + Math.PI) % TAU) - Math.PI;
+  if (d < -Math.PI) d += TAU;
+  return d;
+}
+
+function normalize(x, y) {
+  const len = Math.hypot(x, y);
+  if (len <= 0.0001) return { x: 0, y: 0, len: 0 };
+  return { x: x / len, y: y / len, len };
+}
+
+function pointInRect(p, r) {
+  return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+}
+
+function circleRectOverlap(cx, cy, cr, rect) {
+  const nearestX = clamp(cx, rect.x, rect.x + rect.w);
+  const nearestY = clamp(cy, rect.y, rect.y + rect.h);
+  const dx = cx - nearestX;
+  const dy = cy - nearestY;
+  return dx * dx + dy * dy <= cr * cr;
+}
+
+function distanceToSegment(px, py, ax, ay, bx, by) {
+  const vx = bx - ax;
+  const vy = by - ay;
+  const wx = px - ax;
+  const wy = py - ay;
+  const c1 = vx * wx + vy * wy;
+  if (c1 <= 0) return Math.hypot(px - ax, py - ay);
+  const c2 = vx * vx + vy * vy;
+  if (c2 <= c1) return Math.hypot(px - bx, py - by);
+  const t = c1 / c2;
+  const projX = ax + t * vx;
+  const projY = ay + t * vy;
+  return Math.hypot(px - projX, py - projY);
+}
+
+function lineCircleDistance(ax, ay, bx, by, cx, cy) {
+  return distanceToSegment(cx, cy, ax, ay, bx, by);
+}
+
+function rgba(hex, alpha) {
+  const value = hex.replace('#', '');
+  const bigint = Number.parseInt(value.length === 3 ? value.split('').map((v) => v + v).join('') : value, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function formatResources(resources, names = {}) {
+  const entries = Object.entries(resources || {}).filter(([, qty]) => qty > 0);
+  if (!entries.length) return 'none';
+  return entries
+    .map(([id, qty]) => `${names[id] || id.replace(/_/g, ' ')} ×${qty}`)
+    .join(', ');
+}
+
+function hashString(input) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < input.length; i += 1) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+class RNG {
+  constructor(seed = Date.now()) {
+    this.seed = typeof seed === 'string' ? hashString(seed) : seed >>> 0;
+    if (this.seed === 0) this.seed = 0x9e3779b9;
+  }
+
+  next() {
+    // Mulberry32: tiny, deterministic, good enough for procedural MVP layouts.
+    let t = (this.seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+
+  range(min, max) {
+    return min + (max - min) * this.next();
+  }
+
+  int(min, maxInclusive) {
+    return Math.floor(this.range(min, maxInclusive + 1));
+  }
+
+  chance(probability) {
+    return this.next() < probability;
+  }
+
+  pick(list) {
+    return list[Math.floor(this.next() * list.length)];
+  }
+
+  shuffle(list) {
+    const result = [...list];
+    for (let i = result.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(this.next() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  }
+
+  weighted(entries) {
+    const total = entries.reduce((sum, entry) => sum + entry.weight, 0);
+    let roll = this.range(0, total);
+    for (const entry of entries) {
+      roll -= entry.weight;
+      if (roll <= 0) return entry.value;
+    }
+    return entries.length ? entries[entries.length - 1].value : undefined;
+  }
+}
+
+function drawOutlinedText(ctx, text, x, y, options = {}) {
+  const {
+    align = 'center',
+    color = '#ffecc7',
+    outline = '#08040d',
+    size = 16,
+    font = '900 16px system-ui',
+    width = 5
+  } = options;
+  ctx.save();
+  ctx.font = font.replace('16px', `${size}px`);
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = width;
+  ctx.strokeStyle = outline;
+  ctx.fillStyle = color;
+  ctx.strokeText(text, x, y);
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+// End src/core/utils.js
+
+// Begin src/data/content.js
+const SAVE_VERSION = 1;
+
+const RESOURCE_NAMES = {
+  fur: 'Fur',
+  meat: 'Meat',
+  claws: 'Claws',
+  coins: 'Coins',
+  iron: 'Iron',
+  hide: 'Hide',
+  weapon_fragments: 'Weapon Fragments',
+  arcane_dust: 'Arcane Dust',
+  blood_shards: 'Blood Shards',
+  ancient_vine: 'Ancient Vine',
+  ember_core: 'Ember Core',
+  frost_crystal: 'Frost Crystal',
+  shadow_silk: 'Shadow Silk'
+};
+
+const RARITY = {
+  common: { label: 'Common', color: '#d6d0c2', value: 1 },
+  uncommon: { label: 'Uncommon', color: '#75f28f', value: 2 },
+  rare: { label: 'Rare', color: '#70e8ff', value: 3 },
+  epic: { label: 'Epic', color: '#b68cff', value: 4 },
+  legendary: { label: 'Legendary', color: '#ffd166', value: 5 }
+};
+
+const WEAPONS = {
+  bloodfang: {
+    id: 'bloodfang',
+    name: 'Bloodfang',
+    rarity: 'uncommon',
+    baseDamage: 13,
+    bleedPower: 1.35,
+    critChance: 0.06,
+    critDamage: 1.65,
+    lifesteal: 0.018,
+    identity: 'High bleed dagger. Heavy finishers add an extra bleed stack.',
+    effect: 'bloodfang'
+  },
+  iron_stiletto: {
+    id: 'iron_stiletto',
+    name: 'Iron Stiletto',
+    rarity: 'common',
+    baseDamage: 12,
+    bleedPower: 1,
+    critChance: 0.08,
+    critDamage: 1.55,
+    lifesteal: 0.012,
+    identity: 'Reliable starter dagger with balanced speed and damage.',
+    effect: 'none'
+  },
+  shadow_edge: {
+    id: 'shadow_edge',
+    name: 'Shadow Edge',
+    rarity: 'rare',
+    baseDamage: 12,
+    bleedPower: 0.9,
+    critChance: 0.2,
+    critDamage: 2.1,
+    lifesteal: 0.012,
+    identity: 'High critical chance. Perfect parries briefly raise crit chance.',
+    effect: 'shadow'
+  },
+  storm_fang: {
+    id: 'storm_fang',
+    name: 'Storm Fang',
+    rarity: 'rare',
+    baseDamage: 12,
+    bleedPower: 0.95,
+    critChance: 0.1,
+    critDamage: 1.65,
+    lifesteal: 0.012,
+    identity: 'Heavy and special attacks can chain lightning to a nearby enemy.',
+    effect: 'storm'
+  },
+  ember_knife: {
+    id: 'ember_knife',
+    name: 'Ember Knife',
+    rarity: 'uncommon',
+    baseDamage: 13,
+    bleedPower: 0.95,
+    critChance: 0.07,
+    critDamage: 1.6,
+    lifesteal: 0.01,
+    identity: 'Adds a small burn on heavy and special attacks.',
+    effect: 'ember'
+  },
+  vampiric_fang: {
+    id: 'vampiric_fang',
+    name: 'Vampiric Fang',
+    rarity: 'epic',
+    baseDamage: 11,
+    bleedPower: 1.1,
+    critChance: 0.08,
+    critDamage: 1.65,
+    lifesteal: 0.05,
+    identity: 'Lower raw damage but noticeably stronger balanced lifesteal.',
+    effect: 'vampiric'
+  }
+};
+
+const REGION_CATALOG = [
+  {
+    id: 'forest_frontier',
+    type: 'forest',
+    name: 'Whispering Forest',
+    status: 'playable',
+    description: 'A corrupted fantasy forest with ruins, rivers, caves, ambushes, hidden chests, and a mini-boss route.',
+    recommendedLevel: 1
+  },
+  {
+    id: 'region_desert_placeholder',
+    type: 'desert',
+    name: 'Future Region: Cursed Dunes',
+    status: 'placeholder',
+    description: 'Data-driven placeholder for a future major region.'
+  },
+  {
+    id: 'region_mountain_placeholder',
+    type: 'snow',
+    name: 'Future Region: Frozen Peaks',
+    status: 'placeholder',
+    description: 'Data-driven placeholder for a future major region.'
+  },
+  {
+    id: 'region_volcano_placeholder',
+    type: 'volcanic',
+    name: 'Future Region: Ember Caldera',
+    status: 'placeholder',
+    description: 'Data-driven placeholder for a future major region.'
+  },
+  {
+    id: 'region_swamp_placeholder',
+    type: 'swamp',
+    name: 'Future Region: Blackwater Mire',
+    status: 'placeholder',
+    description: 'Data-driven placeholder for a future major region.'
+  },
+  {
+    id: 'region_kingdom_placeholder',
+    type: 'kingdom',
+    name: 'Future Region: Fallen Crownlands',
+    status: 'placeholder',
+    description: 'Data-driven placeholder for a future major region.'
+  }
+];
+
+const PLAYER_BASE = {
+  maxHp: 118,
+  moveSpeed: 176,
+  armorReductionPerLevel: 0.025,
+  levelHpGain: 9,
+  levelDamageGain: 0.055,
+  parryWindow: 0.18,
+  blockReduction: 0.58,
+  dashCooldown: 1.05,
+  dashDuration: 0.18,
+  dashSpeed: 520,
+  specialCooldown: 7.5
+};
+
+const ATTACKS = {
+  light1: {
+    id: 'light1',
+    label: 'Quick Cut',
+    duration: 0.34,
+    activeStart: 0.07,
+    activeEnd: 0.18,
+    range: 62,
+    arc: 1.48,
+    damageMult: 0.82,
+    bleed: 1,
+    knockback: 34,
+    moveLock: 0.58,
+    hitstop: 0.018
+  },
+  light2: {
+    id: 'light2',
+    label: 'Cross Cut',
+    duration: 0.38,
+    activeStart: 0.08,
+    activeEnd: 0.21,
+    range: 65,
+    arc: 1.55,
+    damageMult: 0.92,
+    bleed: 1,
+    knockback: 42,
+    moveLock: 0.6,
+    hitstop: 0.022
+  },
+  heavy: {
+    id: 'heavy',
+    label: 'Heavy Slash',
+    duration: 0.58,
+    activeStart: 0.18,
+    activeEnd: 0.33,
+    range: 76,
+    arc: 1.22,
+    damageMult: 1.62,
+    bleed: 2,
+    knockback: 90,
+    moveLock: 0.78,
+    hitstop: 0.045
+  },
+  finisher: {
+    id: 'finisher',
+    label: 'Rend Finisher',
+    duration: 0.64,
+    activeStart: 0.17,
+    activeEnd: 0.36,
+    range: 86,
+    arc: 1.65,
+    damageMult: 1.92,
+    bleed: 3,
+    knockback: 130,
+    moveLock: 0.82,
+    hitstop: 0.06
+  },
+  special: {
+    id: 'special',
+    label: 'Crimson Spiral',
+    duration: 0.76,
+    activeStart: 0.13,
+    activeEnd: 0.47,
+    range: 104,
+    arc: 6.283185307179586,
+    damageMult: 2.25,
+    bleed: 3,
+    knockback: 105,
+    moveLock: 0.86,
+    hitstop: 0.055
+  },
+  counter: {
+    id: 'counter',
+    label: 'Blood Riposte',
+    duration: 0.3,
+    activeStart: 0,
+    activeEnd: 0.16,
+    range: 92,
+    arc: 1.9,
+    damageMult: 2.85,
+    bleed: 4,
+    knockback: 170,
+    moveLock: 0.95,
+    hitstop: 0.09
+  }
+};
+
+const BASIC_ENEMY_IDS = ['wolf', 'goblin', 'goblin_archer', 'mage', 'brute'];
+
+const ENEMY_TYPES = {
+  wolf: {
+    id: 'wolf',
+    name: 'Wolf',
+    role: 'fast melee attacker',
+    radius: 18,
+    maxHp: 54,
+    speed: 128,
+    damageTint: '#ff6f91',
+    body: '#5f5665',
+    accent: '#e7d1b1',
+    xp: 9,
+    aggroRange: 440,
+    drops: [
+      { id: 'fur', min: 1, max: 3, chance: 0.9 },
+      { id: 'meat', min: 1, max: 2, chance: 0.72 },
+      { id: 'claws', min: 1, max: 1, chance: 0.32 }
+    ],
+    coinDrop: [1, 5],
+    attacks: [
+      {
+        id: 'lunge',
+        label: 'Lunge',
+        kind: 'melee',
+        range: 58,
+        windup: 0.32,
+        active: 0.14,
+        recovery: 0.68,
+        damage: 10,
+        arc: 1.0,
+        dash: 156,
+        knockback: 85,
+        indicatorColor: '#ff406a'
+      }
+    ]
+  },
+  goblin: {
+    id: 'goblin',
+    name: 'Goblin',
+    role: 'basic melee fighter',
+    radius: 19,
+    maxHp: 72,
+    speed: 83,
+    damageTint: '#9aff6b',
+    body: '#4fa64f',
+    accent: '#ffc857',
+    xp: 12,
+    aggroRange: 410,
+    drops: [
+      { id: 'iron', min: 1, max: 2, chance: 0.42 },
+      { id: 'weapon_fragments', min: 1, max: 1, chance: 0.16 },
+      { id: 'meat', min: 1, max: 1, chance: 0.28 }
+    ],
+    coinDrop: [4, 10],
+    attacks: [
+      {
+        id: 'stab',
+        label: 'Stab',
+        kind: 'melee',
+        range: 55,
+        windup: 0.48,
+        active: 0.18,
+        recovery: 0.72,
+        damage: 13,
+        arc: 1.16,
+        dash: 54,
+        knockback: 70,
+        indicatorColor: '#ffbf3f'
+      }
+    ]
+  },
+  goblin_archer: {
+    id: 'goblin_archer',
+    name: 'Goblin Archer',
+    role: 'ranged attacker',
+    radius: 17,
+    maxHp: 58,
+    speed: 74,
+    damageTint: '#b7fbff',
+    body: '#3a8f5b',
+    accent: '#f2c15f',
+    xp: 14,
+    aggroRange: 560,
+    preferredRange: 260,
+    drops: [
+      { id: 'iron', min: 1, max: 2, chance: 0.5 },
+      { id: 'weapon_fragments', min: 1, max: 1, chance: 0.22 },
+      { id: 'claws', min: 1, max: 1, chance: 0.13 }
+    ],
+    coinDrop: [5, 12],
+    attacks: [
+      {
+        id: 'arrow',
+        label: 'Aimed Shot',
+        kind: 'projectile',
+        range: 365,
+        windup: 0.78,
+        active: 0.08,
+        recovery: 1.15,
+        damage: 12,
+        projectileSpeed: 365,
+        projectileRadius: 7,
+        indicatorColor: '#ffe066'
+      }
+    ]
+  },
+  mage: {
+    id: 'mage',
+    name: 'Forest Mage',
+    role: 'ranged magic and area attacks',
+    radius: 18,
+    maxHp: 70,
+    speed: 58,
+    damageTint: '#d4a6ff',
+    body: '#6842a5',
+    accent: '#92f1ff',
+    xp: 18,
+    aggroRange: 570,
+    preferredRange: 285,
+    drops: [
+      { id: 'arcane_dust', min: 1, max: 2, chance: 0.68 },
+      { id: 'blood_shards', min: 1, max: 1, chance: 0.2 },
+      { id: 'weapon_fragments', min: 1, max: 1, chance: 0.2 }
+    ],
+    coinDrop: [8, 16],
+    attacks: [
+      {
+        id: 'rune_burst',
+        label: 'Rune Burst',
+        kind: 'aoe',
+        range: 330,
+        windup: 1.0,
+        active: 0.12,
+        recovery: 1.22,
+        damage: 18,
+        areaRadius: 60,
+        indicatorColor: '#b68cff'
+      },
+      {
+        id: 'bolt',
+        label: 'Hex Bolt',
+        kind: 'projectile',
+        range: 355,
+        windup: 0.58,
+        active: 0.08,
+        recovery: 1.05,
+        damage: 11,
+        projectileSpeed: 285,
+        projectileRadius: 9,
+        indicatorColor: '#70e8ff'
+      }
+    ]
+  },
+  brute: {
+    id: 'brute',
+    name: 'Iron Brute',
+    role: 'slow but powerful',
+    radius: 26,
+    maxHp: 158,
+    speed: 48,
+    damageTint: '#ff9b54',
+    body: '#7c624b',
+    accent: '#e1c38a',
+    xp: 26,
+    aggroRange: 430,
+    drops: [
+      { id: 'iron', min: 2, max: 4, chance: 0.84 },
+      { id: 'hide', min: 1, max: 2, chance: 0.66 },
+      { id: 'weapon_fragments', min: 1, max: 2, chance: 0.28 }
+    ],
+    coinDrop: [10, 22],
+    attacks: [
+      {
+        id: 'wide_slam',
+        label: 'Wide Slam',
+        kind: 'melee',
+        range: 82,
+        windup: 0.88,
+        active: 0.23,
+        recovery: 1.12,
+        damage: 26,
+        arc: 1.95,
+        dash: 34,
+        knockback: 155,
+        indicatorColor: '#ff6b35'
+      }
+    ]
+  }
+};
+
+const MINI_BOSSES = {
+  alpha_wolf: {
+    id: 'alpha_wolf',
+    name: 'Alpha Wolf',
+    role: 'mini-boss',
+    radius: 36,
+    maxHp: 430,
+    speed: 112,
+    body: '#3f3f59',
+    accent: '#ff4d6d',
+    xp: 90,
+    coinDrop: [45, 78],
+    drops: [
+      { id: 'fur', min: 6, max: 10, chance: 1 },
+      { id: 'claws', min: 3, max: 6, chance: 1 },
+      { id: 'blood_shards', min: 2, max: 4, chance: 0.88 },
+      { id: 'weapon_fragments', min: 2, max: 5, chance: 0.7 }
+    ],
+    weaponChance: 0.34,
+    attacks: [
+      {
+        id: 'alpha_pounce',
+        label: 'Alpha Pounce',
+        kind: 'charge',
+        range: 220,
+        windup: 0.64,
+        active: 0.32,
+        recovery: 0.96,
+        damage: 24,
+        chargeSpeed: 410,
+        knockback: 180,
+        indicatorColor: '#ff315f'
+      },
+      {
+        id: 'blood_bite',
+        label: 'Blood Bite',
+        kind: 'melee',
+        range: 82,
+        windup: 0.42,
+        active: 0.2,
+        recovery: 0.78,
+        damage: 20,
+        arc: 1.22,
+        dash: 88,
+        knockback: 120,
+        indicatorColor: '#ff7993'
+      },
+      {
+        id: 'howl',
+        label: 'Howl',
+        kind: 'summon',
+        range: 480,
+        windup: 0.95,
+        active: 0.16,
+        recovery: 1.7,
+        damage: 0,
+        summon: 'wolf',
+        summonCount: 2,
+        indicatorColor: '#ffd166'
+      }
+    ],
+    phase2: {
+      threshold: 0.5,
+      speedMultiplier: 1.14,
+      damageMultiplier: 1.18,
+      note: 'The Alpha becomes frenzied and attacks faster below half health.'
+    }
+  },
+  goblin_champion: {
+    id: 'goblin_champion',
+    name: 'Goblin Champion',
+    role: 'mini-boss',
+    radius: 34,
+    maxHp: 465,
+    speed: 82,
+    body: '#2f8f58',
+    accent: '#ffd166',
+    xp: 96,
+    coinDrop: [55, 92],
+    drops: [
+      { id: 'iron', min: 5, max: 9, chance: 1 },
+      { id: 'weapon_fragments', min: 4, max: 7, chance: 1 },
+      { id: 'blood_shards', min: 1, max: 3, chance: 0.72 }
+    ],
+    weaponChance: 0.38,
+    attacks: [
+      {
+        id: 'champion_combo',
+        label: 'Champion Combo',
+        kind: 'triple_melee',
+        range: 86,
+        windup: 0.5,
+        active: 0.22,
+        recovery: 1.0,
+        damage: 16,
+        arc: 1.45,
+        dash: 72,
+        knockback: 112,
+        indicatorColor: '#ffbf3f'
+      },
+      {
+        id: 'shield_crash',
+        label: 'Shield Crash',
+        kind: 'charge',
+        range: 235,
+        windup: 0.75,
+        active: 0.38,
+        recovery: 1.18,
+        damage: 24,
+        chargeSpeed: 355,
+        knockback: 190,
+        indicatorColor: '#ff6b35'
+      }
+    ],
+    phase2: {
+      threshold: 0.45,
+      speedMultiplier: 1.08,
+      damageMultiplier: 1.2,
+      note: 'Below half health the Champion chains slashes more aggressively.'
+    }
+  },
+  corrupted_treant: {
+    id: 'corrupted_treant',
+    name: 'Corrupted Treant',
+    role: 'mini-boss',
+    radius: 42,
+    maxHp: 540,
+    speed: 45,
+    body: '#4d3b2e',
+    accent: '#9bff70',
+    xp: 105,
+    coinDrop: [48, 85],
+    drops: [
+      { id: 'ancient_vine', min: 3, max: 6, chance: 1 },
+      { id: 'hide', min: 4, max: 7, chance: 0.86 },
+      { id: 'blood_shards', min: 2, max: 4, chance: 0.82 },
+      { id: 'arcane_dust', min: 2, max: 5, chance: 0.76 }
+    ],
+    weaponChance: 0.32,
+    attacks: [
+      {
+        id: 'root_snare',
+        label: 'Root Snare',
+        kind: 'aoe',
+        range: 340,
+        windup: 1.05,
+        active: 0.18,
+        recovery: 1.35,
+        damage: 20,
+        areaRadius: 74,
+        indicatorColor: '#9bff70'
+      },
+      {
+        id: 'branch_sweep',
+        label: 'Branch Sweep',
+        kind: 'melee',
+        range: 112,
+        windup: 0.82,
+        active: 0.28,
+        recovery: 1.15,
+        damage: 27,
+        arc: 2.25,
+        dash: 18,
+        knockback: 175,
+        indicatorColor: '#ff6b35'
+      }
+    ],
+    phase2: {
+      threshold: 0.5,
+      speedMultiplier: 1,
+      damageMultiplier: 1.15,
+      note: 'Corruption blooms under the Treant, increasing area pressure.'
+    }
+  }
+};
+
+const REGIONAL_BOSS_BLUEPRINTS = {
+  forest_guardian: {
+    id: 'forest_guardian',
+    regionType: 'forest',
+    name: 'Elder Thorn Guardian',
+    status: 'architecture-only',
+    phaseCount: 2,
+    rewardTags: ['legendary_dagger', 'region_unlock_material'],
+    attacks: ['sweeping_vines', 'thorn_wall', 'corruption_bloom']
+  }
+};
+
+const RUN_ABILITIES = [
+  {
+    id: 'blood_burst',
+    name: 'Blood Burst',
+    shortName: 'Blood +',
+    color: '#e52c59',
+    description: 'Bleed damage is increased by 45% this hunt.',
+    modifiers: { bleedDamageMult: 0.45 }
+  },
+  {
+    id: 'shadow_dash',
+    name: 'Shadow Dash',
+    shortName: 'Dash +',
+    color: '#70e8ff',
+    description: 'Dash cooldown is reduced by 25% and the trail lasts longer.',
+    modifiers: { dashCooldownMult: -0.25, dashTrail: 0.4 }
+  },
+  {
+    id: 'crimson_fury',
+    name: 'Crimson Fury',
+    shortName: 'Fury',
+    color: '#ff6b35',
+    description: 'Deal 25% more damage while below 40% health.',
+    modifiers: { lowHealthDamageMult: 0.25 }
+  },
+  {
+    id: 'leeching_cuts',
+    name: 'Leeching Cuts',
+    shortName: 'Leech +',
+    color: '#ff8fab',
+    description: 'Hits against bleeding enemies restore a little more health.',
+    modifiers: { bleedLifesteal: 0.035 }
+  },
+  {
+    id: 'iron_veil',
+    name: 'Iron Veil',
+    shortName: 'Block +',
+    color: '#b7fbff',
+    description: 'Normal blocks reduce more incoming damage this hunt.',
+    modifiers: { blockReduction: 0.18 }
+  },
+  {
+    id: 'hunters_tempo',
+    name: "Hunter's Tempo",
+    shortName: 'Tempo',
+    color: '#ffd166',
+    description: 'Perfect parries reduce special cooldown by 2 seconds.',
+    modifiers: { parrySpecialRefund: 2 }
+  },
+  {
+    id: 'rending_rhythm',
+    name: 'Rending Rhythm',
+    shortName: 'Combo +',
+    color: '#f7d9ff',
+    description: 'Combo finishers deal 18% more damage and add 1 bleed stack.',
+    modifiers: { finisherDamageMult: 0.18, finisherBleed: 1 }
+  }
+];
+
+const COSMETIC_OPTIONS = {
+  hairColor: ['#2b1a18', '#7d2f25', '#f2d092', '#b72f4f', '#78d6ff', '#f7f0ff'],
+  outfitColor: ['#552266', '#7e1233', '#294c60', '#315c2b', '#5c3b20', '#221f35'],
+  accentColor: ['#e52c59', '#ffd166', '#70e8ff', '#9bff70', '#b68cff']
+};
+
+function xpToNextLevel(level) {
+  return Math.floor(55 + level * 42 + Math.pow(level, 1.35) * 11);
+}
+
+function weaponUpgradeCost(level) {
+  return {
+    coins: 35 + level * 32,
+    iron: Math.max(1, Math.floor(level * 1.25)),
+    claws: level >= 2 ? Math.floor(level / 2) : 0,
+    weapon_fragments: level >= 3 ? level - 2 : 0,
+    blood_shards: level >= 5 ? 1 : 0
+  };
+}
+
+function armorUpgradeCost(level) {
+  return {
+    coins: 30 + level * 28,
+    hide: Math.max(1, Math.floor(level * 1.2)),
+    fur: Math.max(0, level - 1),
+    iron: level >= 3 ? Math.floor(level / 2) : 0
+  };
+}
+
+// End src/data/content.js
+
+// Begin src/core/save-system.js
+const STORAGE_KEY = 'dager-hunter-save-v1';
+
+function createDefaultSave() {
+  return {
+    version: SAVE_VERSION,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    player: {
+      level: 1,
+      xp: 0,
+      unlockedRegions: ['forest_frontier'],
+      stats: {
+        huntsStarted: 0,
+        huntsEscaped: 0,
+        deaths: 0,
+        enemiesDefeated: 0,
+        miniBossesDefeated: 0,
+        perfectParries: 0,
+        chestsOpened: 0,
+        secretsFound: 0
+      }
+    },
+    wallet: {
+      coins: 0,
+      resources: {
+        fur: 0,
+        meat: 0,
+        claws: 0,
+        iron: 0,
+        hide: 0,
+        weapon_fragments: 0,
+        arcane_dust: 0,
+        blood_shards: 0,
+        ancient_vine: 0,
+        ember_core: 0,
+        frost_crystal: 0,
+        shadow_silk: 0
+      }
+    },
+    equipment: {
+      equippedWeapon: 'bloodfang',
+      weapons: {
+        bloodfang: { owned: true, level: 1, foundAt: Date.now() },
+        iron_stiletto: { owned: true, level: 1, foundAt: Date.now() }
+      },
+      armor: {
+        id: 'hunter_garb',
+        name: 'Hunter Garb',
+        level: 1
+      }
+    },
+    cosmetics: {
+      hair: 'windswept',
+      face: 'scarred',
+      hairColor: COSMETIC_OPTIONS.hairColor[3],
+      outfitColor: COSMETIC_OPTIONS.outfitColor[0],
+      accentColor: COSMETIC_OPTIONS.accentColor[0]
+    },
+    base: {
+      blacksmithLevel: 1,
+      armorerLevel: 1,
+      storageLevel: 1,
+      storyFlags: {
+        introSeen: false
+      }
+    }
+  };
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function mergeDefaults(defaultValue, savedValue) {
+  if (Array.isArray(defaultValue)) {
+    return Array.isArray(savedValue) ? savedValue : [...defaultValue];
+  }
+  if (isPlainObject(defaultValue)) {
+    const out = { ...defaultValue };
+    if (isPlainObject(savedValue)) {
+      for (const [key, value] of Object.entries(savedValue)) {
+        out[key] = key in defaultValue ? mergeDefaults(defaultValue[key], value) : value;
+      }
+    }
+    return out;
+  }
+  return savedValue === undefined ? defaultValue : savedValue;
+}
+
+class SaveSystem {
+  constructor() {
+    this.storageKey = STORAGE_KEY;
+    this.data = this.load();
+  }
+
+  load() {
+    const fallback = createDefaultSave();
+    try {
+      const raw = window.localStorage.getItem(this.storageKey);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return mergeDefaults(fallback, parsed);
+    } catch (error) {
+      console.warn('Could not load save; using defaults.', error);
+      return fallback;
+    }
+  }
+
+  save() {
+    this.data.updatedAt = Date.now();
+    window.localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+  }
+
+  reset() {
+    this.data = createDefaultSave();
+    this.save();
+  }
+
+  export() {
+    return JSON.stringify(this.data, null, 2);
+  }
+
+  import(json) {
+    const parsed = JSON.parse(json);
+    this.data = mergeDefaults(createDefaultSave(), parsed);
+    this.save();
+  }
+}
+
+// End src/core/save-system.js
+
+// Begin src/core/audio.js
+class AudioManager {
+  constructor() {
+    this.ctx = null;
+    this.master = null;
+    this.ambientGain = null;
+    this.enabled = true;
+    this.unlocked = false;
+  }
+
+  async unlock() {
+    if (this.unlocked || !this.enabled) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) {
+      this.enabled = false;
+      return;
+    }
+    this.ctx = new AudioContext();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 0.55;
+    this.master.connect(this.ctx.destination);
+    if (this.ctx.state === 'suspended') await this.ctx.resume();
+    this.unlocked = true;
+    this.startAmbient();
+  }
+
+  setMuted(muted) {
+    this.enabled = !muted;
+    if (this.master) this.master.gain.value = muted ? 0 : 0.55;
+  }
+
+  now() {
+    return this.ctx ? this.ctx.currentTime : 0;
+  }
+
+  tone({ frequency = 440, duration = 0.08, type = 'sine', gain = 0.12, start = 0, endFrequency = null, pan = 0 } = {}) {
+    if (!this.unlocked || !this.enabled) return;
+    const t = this.now() + start;
+    const osc = this.ctx.createOscillator();
+    const amp = this.ctx.createGain();
+    const stereo = this.ctx.createStereoPanner ? this.ctx.createStereoPanner() : null;
+    osc.type = type;
+    osc.frequency.setValueAtTime(frequency, t);
+    if (endFrequency) osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFrequency), t + duration);
+    amp.gain.setValueAtTime(0.0001, t);
+    amp.gain.exponentialRampToValueAtTime(gain, t + 0.01);
+    amp.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+    if (stereo) {
+      stereo.pan.value = pan;
+      osc.connect(amp).connect(stereo).connect(this.master);
+    } else {
+      osc.connect(amp).connect(this.master);
+    }
+    osc.start(t);
+    osc.stop(t + duration + 0.02);
+  }
+
+  noise({ duration = 0.08, gain = 0.1, start = 0, filter = 1400, pan = 0 } = {}) {
+    if (!this.unlocked || !this.enabled) return;
+    const t = this.now() + start;
+    const bufferSize = Math.max(1, Math.floor(this.ctx.sampleRate * duration));
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i += 1) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    const amp = this.ctx.createGain();
+    const biquad = this.ctx.createBiquadFilter();
+    const stereo = this.ctx.createStereoPanner ? this.ctx.createStereoPanner() : null;
+    biquad.type = 'bandpass';
+    biquad.frequency.value = filter;
+    biquad.Q.value = 0.8;
+    amp.gain.setValueAtTime(0.0001, t);
+    amp.gain.exponentialRampToValueAtTime(gain, t + 0.008);
+    amp.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+    if (stereo) {
+      stereo.pan.value = pan;
+      source.connect(biquad).connect(amp).connect(stereo).connect(this.master);
+    } else {
+      source.connect(biquad).connect(amp).connect(this.master);
+    }
+    source.start(t);
+    source.stop(t + duration + 0.02);
+  }
+
+  play(name, intensity = 1) {
+    if (!this.unlocked || !this.enabled) return;
+    const gain = Math.min(1.6, Math.max(0.35, intensity));
+    switch (name) {
+      case 'light':
+        this.noise({ duration: 0.055, gain: 0.055 * gain, filter: 2300 });
+        this.tone({ frequency: 640, endFrequency: 300, type: 'triangle', duration: 0.07, gain: 0.035 * gain });
+        break;
+      case 'heavy':
+        this.noise({ duration: 0.08, gain: 0.08 * gain, filter: 1300 });
+        this.tone({ frequency: 190, endFrequency: 90, type: 'sawtooth', duration: 0.12, gain: 0.05 * gain });
+        break;
+      case 'hit':
+        this.noise({ duration: 0.065, gain: 0.08 * gain, filter: 900 });
+        this.tone({ frequency: 130, endFrequency: 80, type: 'square', duration: 0.055, gain: 0.035 * gain });
+        break;
+      case 'crit':
+        this.tone({ frequency: 840, endFrequency: 520, type: 'triangle', duration: 0.1, gain: 0.07 * gain });
+        this.tone({ frequency: 1280, endFrequency: 720, type: 'sine', duration: 0.09, gain: 0.04 * gain, start: 0.02 });
+        break;
+      case 'parry':
+        this.noise({ duration: 0.12, gain: 0.13 * gain, filter: 4200 });
+        this.tone({ frequency: 1500, endFrequency: 460, type: 'sine', duration: 0.18, gain: 0.11 * gain });
+        this.tone({ frequency: 95, endFrequency: 55, type: 'sawtooth', duration: 0.18, gain: 0.08 * gain });
+        break;
+      case 'block':
+        this.noise({ duration: 0.07, gain: 0.065 * gain, filter: 600 });
+        this.tone({ frequency: 260, endFrequency: 170, type: 'triangle', duration: 0.08, gain: 0.035 * gain });
+        break;
+      case 'dash':
+        this.noise({ duration: 0.13, gain: 0.07 * gain, filter: 3200 });
+        this.tone({ frequency: 500, endFrequency: 210, type: 'sine', duration: 0.12, gain: 0.035 * gain });
+        break;
+      case 'special':
+        this.tone({ frequency: 180, endFrequency: 80, type: 'sawtooth', duration: 0.22, gain: 0.08 * gain });
+        this.noise({ duration: 0.18, gain: 0.09 * gain, filter: 1800, start: 0.04 });
+        this.tone({ frequency: 770, endFrequency: 1130, type: 'triangle', duration: 0.16, gain: 0.06 * gain, start: 0.06 });
+        break;
+      case 'loot':
+        this.tone({ frequency: 700, type: 'triangle', duration: 0.08, gain: 0.05 * gain });
+        this.tone({ frequency: 1040, type: 'sine', duration: 0.11, gain: 0.04 * gain, start: 0.06 });
+        break;
+      case 'ui':
+        this.tone({ frequency: 360, endFrequency: 520, type: 'triangle', duration: 0.07, gain: 0.04 * gain });
+        break;
+      case 'enemy':
+        this.tone({ frequency: 110, endFrequency: 70, type: 'sawtooth', duration: 0.14, gain: 0.055 * gain });
+        break;
+      case 'death':
+        this.tone({ frequency: 150, endFrequency: 40, type: 'sawtooth', duration: 0.6, gain: 0.08 * gain });
+        this.noise({ duration: 0.35, gain: 0.08 * gain, filter: 300 });
+        break;
+      default:
+        this.tone({ frequency: 440, duration: 0.05, gain: 0.03 * gain });
+    }
+  }
+
+  startAmbient() {
+    if (!this.unlocked || this.ambientGain) return;
+    this.ambientGain = this.ctx.createGain();
+    this.ambientGain.gain.value = 0.035;
+    this.ambientGain.connect(this.master);
+
+    const oscA = this.ctx.createOscillator();
+    const oscB = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 360;
+    oscA.type = 'sine';
+    oscB.type = 'triangle';
+    oscA.frequency.value = 58;
+    oscB.frequency.value = 87;
+    oscA.connect(filter);
+    oscB.connect(filter);
+    filter.connect(this.ambientGain);
+    oscA.start();
+    oscB.start();
+
+    // Slow gain pulse for fantasy ambience without streaming audio assets.
+    const pulse = () => {
+      if (!this.ctx || !this.ambientGain) return;
+      const t = this.now();
+      this.ambientGain.gain.cancelScheduledValues(t);
+      this.ambientGain.gain.setValueAtTime(this.ambientGain.gain.value, t);
+      this.ambientGain.gain.linearRampToValueAtTime(0.018 + Math.random() * 0.025, t + 3 + Math.random() * 2);
+      window.setTimeout(pulse, 3000 + Math.random() * 2000);
+    };
+    pulse();
+  }
+}
+
+// End src/core/audio.js
+
+// Begin src/core/input.js
+const ACTIONS = ['light', 'heavy', 'special', 'block', 'dash', 'interact', 'pause'];
+
+class InputManager {
+  constructor({ onFirstInput } = {}) {
+    this.onFirstInput = onFirstInput;
+    this.firstInputSent = false;
+    this.move = { x: 0, y: 0, strength: 0 };
+    this.actions = {};
+    ACTIONS.forEach((action) => {
+      this.actions[action] = { down: false, presses: 0, releases: 0 };
+    });
+    this.keys = new Set();
+    this.joystickPointerId = null;
+    this.joystickCenter = { x: 0, y: 0 };
+    this.joystickRadius = 58;
+    this.setupDomControls();
+    this.setupKeyboard();
+    window.addEventListener('contextmenu', (event) => event.preventDefault());
+  }
+
+  setupDomControls() {
+    this.zone = document.getElementById('joystick-zone');
+    this.knob = document.getElementById('joystick-knob');
+    if (this.zone) {
+      this.zone.addEventListener('pointerdown', (event) => {
+        this.unlockOnce();
+        this.joystickPointerId = event.pointerId;
+        this.zone.setPointerCapture(event.pointerId);
+        const rect = this.zone.getBoundingClientRect();
+        this.joystickCenter.x = rect.left + rect.width / 2;
+        this.joystickCenter.y = rect.top + rect.height / 2;
+        this.updateJoystick(event.clientX, event.clientY);
+      });
+      this.zone.addEventListener('pointermove', (event) => {
+        if (event.pointerId !== this.joystickPointerId) return;
+        this.updateJoystick(event.clientX, event.clientY);
+      });
+      const end = (event) => {
+        if (event.pointerId !== this.joystickPointerId) return;
+        this.joystickPointerId = null;
+        this.move.x = 0;
+        this.move.y = 0;
+        this.move.strength = 0;
+        this.updateKnob(0, 0);
+      };
+      this.zone.addEventListener('pointerup', end);
+      this.zone.addEventListener('pointercancel', end);
+    }
+
+    document.querySelectorAll('[data-action]').forEach((button) => {
+      const action = button.dataset.action;
+      if (!this.actions[action]) return;
+      button.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        this.unlockOnce();
+        button.setPointerCapture(event.pointerId);
+        this.setAction(action, true);
+      });
+      const release = (event) => {
+        event.preventDefault();
+        this.setAction(action, false);
+      };
+      button.addEventListener('pointerup', release);
+      button.addEventListener('pointercancel', release);
+      button.addEventListener('lostpointercapture', () => this.setAction(action, false));
+    });
+  }
+
+  setupKeyboard() {
+    window.addEventListener('keydown', (event) => {
+      this.unlockOnce();
+      if (event.repeat) return;
+      const mapped = this.mapKey(event.code);
+      if (mapped) {
+        event.preventDefault();
+        this.setAction(mapped, true);
+      }
+      this.keys.add(event.code);
+      this.updateKeyboardMove();
+    });
+    window.addEventListener('keyup', (event) => {
+      const mapped = this.mapKey(event.code);
+      if (mapped) {
+        event.preventDefault();
+        this.setAction(mapped, false);
+      }
+      this.keys.delete(event.code);
+      this.updateKeyboardMove();
+    });
+    window.addEventListener('blur', () => {
+      for (const action of ACTIONS) this.setAction(action, false);
+      this.keys.clear();
+      this.updateKeyboardMove();
+    });
+  }
+
+  mapKey(code) {
+    switch (code) {
+      case 'KeyJ':
+      case 'Numpad1':
+        return 'light';
+      case 'KeyK':
+      case 'Numpad2':
+        return 'heavy';
+      case 'KeyL':
+      case 'Numpad3':
+        return 'special';
+      case 'ShiftLeft':
+      case 'ShiftRight':
+        return 'block';
+      case 'Space':
+        return 'dash';
+      case 'KeyE':
+      case 'Enter':
+        return 'interact';
+      case 'Escape':
+      case 'KeyP':
+        return 'pause';
+      default:
+        return null;
+    }
+  }
+
+  updateKeyboardMove() {
+    let x = 0;
+    let y = 0;
+    if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) x -= 1;
+    if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) x += 1;
+    if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) y -= 1;
+    if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) y += 1;
+    if (x !== 0 || y !== 0) {
+      const length = Math.hypot(x, y);
+      this.move.x = x / length;
+      this.move.y = y / length;
+      this.move.strength = 1;
+    } else if (this.joystickPointerId === null) {
+      this.move.x = 0;
+      this.move.y = 0;
+      this.move.strength = 0;
+    }
+  }
+
+  unlockOnce() {
+    if (this.firstInputSent) return;
+    this.firstInputSent = true;
+    if (this.onFirstInput) this.onFirstInput();
+  }
+
+  updateJoystick(clientX, clientY) {
+    const dx = clientX - this.joystickCenter.x;
+    const dy = clientY - this.joystickCenter.y;
+    const length = Math.hypot(dx, dy);
+    const clamped = Math.min(length, this.joystickRadius);
+    const nx = length > 0 ? dx / length : 0;
+    const ny = length > 0 ? dy / length : 0;
+    this.move.x = nx;
+    this.move.y = ny;
+    this.move.strength = clamped / this.joystickRadius;
+    this.updateKnob(nx * clamped, ny * clamped);
+  }
+
+  updateKnob(x, y) {
+    if (!this.knob) return;
+    this.knob.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+  }
+
+  setAction(action, down) {
+    const state = this.actions[action];
+    if (!state) return;
+    if (down && !state.down) state.presses += 1;
+    if (!down && state.down) state.releases += 1;
+    state.down = down;
+  }
+
+  consume(action) {
+    const state = this.actions[action];
+    if (!state || state.presses <= 0) return false;
+    state.presses -= 1;
+    return true;
+  }
+
+  isDown(action) {
+    return Boolean(this.actions[action] && this.actions[action].down);
+  }
+
+  endFrame() {
+    for (const action of ACTIONS) {
+      this.actions[action].presses = 0;
+      this.actions[action].releases = 0;
+    }
+  }
+}
+
+// End src/core/input.js
+
+// Begin src/systems/procedural-forest.js
+function resolveCircleRect(entity, rect) {
+  const nearestX = clamp(entity.x, rect.x, rect.x + rect.w);
+  const nearestY = clamp(entity.y, rect.y, rect.y + rect.h);
+  let dx = entity.x - nearestX;
+  let dy = entity.y - nearestY;
+  let dist = Math.hypot(dx, dy);
+  if (dist > entity.radius || dist <= 0.0001) {
+    if (dist > entity.radius) return;
+    const left = Math.abs(entity.x - rect.x);
+    const right = Math.abs(rect.x + rect.w - entity.x);
+    const top = Math.abs(entity.y - rect.y);
+    const bottom = Math.abs(rect.y + rect.h - entity.y);
+    const min = Math.min(left, right, top, bottom);
+    if (min === left) {
+      dx = -1;
+      dy = 0;
+      dist = 0;
+    } else if (min === right) {
+      dx = 1;
+      dy = 0;
+      dist = 0;
+    } else if (min === top) {
+      dx = 0;
+      dy = -1;
+      dist = 0;
+    } else {
+      dx = 0;
+      dy = 1;
+      dist = 0;
+    }
+  }
+  const push = entity.radius - dist + 0.01;
+  const nx = dist > 0 ? dx / dist : dx;
+  const ny = dist > 0 ? dy / dist : dy;
+  entity.x += nx * push;
+  entity.y += ny * push;
+}
+
+function resolveCircleObstacle(entity, obstacle) {
+  const dx = entity.x - obstacle.x;
+  const dy = entity.y - obstacle.y;
+  const minDistance = entity.radius + obstacle.r;
+  const dist = Math.hypot(dx, dy);
+  if (dist >= minDistance || dist <= 0.0001) return;
+  const push = minDistance - dist + 0.01;
+  entity.x += (dx / dist) * push;
+  entity.y += (dy / dist) * push;
+}
+
+class BaseWorld {
+  constructor() {
+    this.kind = 'base';
+    this.width = 1700;
+    this.height = 1160;
+    this.start = { x: 850, y: 760 };
+    this.boundsPadding = 34;
+    this.buildings = [
+      {
+        id: 'world_map',
+        label: 'World Map',
+        subtitle: 'Start Forest Hunt',
+        x: 1220,
+        y: 410,
+        w: 210,
+        h: 154,
+        color: '#315c2b',
+        roof: '#2d4030',
+        icon: '✦',
+        radius: 140
+      },
+      {
+        id: 'blacksmith',
+        label: 'Blacksmith',
+        subtitle: 'Upgrade daggers',
+        x: 365,
+        y: 365,
+        w: 220,
+        h: 166,
+        color: '#714332',
+        roof: '#321a17',
+        icon: '⚒',
+        radius: 145
+      },
+      {
+        id: 'armorer',
+        label: 'Armorer',
+        subtitle: 'Upgrade armor',
+        x: 655,
+        y: 250,
+        w: 200,
+        h: 145,
+        color: '#4b5974',
+        roof: '#252c3d',
+        icon: '◆',
+        radius: 130
+      },
+      {
+        id: 'storage',
+        label: 'Storage',
+        subtitle: 'Inventory',
+        x: 1068,
+        y: 760,
+        w: 218,
+        h: 146,
+        color: '#6a4c2f',
+        roof: '#332416',
+        icon: '▣',
+        radius: 130
+      },
+      {
+        id: 'customization',
+        label: 'Wardrobe',
+        subtitle: 'Cosmetics',
+        x: 270,
+        y: 720,
+        w: 212,
+        h: 142,
+        color: '#603a7f',
+        roof: '#301948',
+        icon: '✿',
+        radius: 130
+      },
+      {
+        id: 'skill_master',
+        label: 'Skill Master',
+        subtitle: 'Hunter notes',
+        x: 840,
+        y: 132,
+        w: 230,
+        h: 136,
+        color: '#4b306d',
+        roof: '#20122f',
+        icon: '☽',
+        radius: 132
+      },
+      {
+        id: 'training',
+        label: 'Training Yard',
+        subtitle: 'Practice parry',
+        x: 690,
+        y: 870,
+        w: 280,
+        h: 176,
+        color: '#42533b',
+        roof: '#293121',
+        icon: '◎',
+        radius: 160
+      }
+    ];
+    this.obstacles = [
+      { x: 160, y: 210, r: 46, type: 'tree' },
+      { x: 250, y: 270, r: 33, type: 'tree' },
+      { x: 1450, y: 230, r: 52, type: 'tree' },
+      { x: 1545, y: 330, r: 38, type: 'tree' },
+      { x: 125, y: 950, r: 58, type: 'tree' },
+      { x: 1525, y: 940, r: 62, type: 'tree' },
+      { x: 1170, y: 210, r: 31, type: 'rock' },
+      { x: 530, y: 985, r: 28, type: 'rock' },
+      { x: 1350, y: 735, r: 26, type: 'rock' }
+    ];
+  }
+
+  getStartPosition() {
+    return { ...this.start };
+  }
+
+  resolveCollision(entity) {
+    entity.x = clamp(entity.x, this.boundsPadding + entity.radius, this.width - this.boundsPadding - entity.radius);
+    entity.y = clamp(entity.y, this.boundsPadding + entity.radius, this.height - this.boundsPadding - entity.radius);
+    for (const obstacle of this.obstacles) resolveCircleObstacle(entity, obstacle);
+    for (const building of this.buildings) {
+      // Leave the World Map portal walkable in the center; block only the physical buildings.
+      if (building.id === 'world_map') continue;
+      resolveCircleRect(entity, { x: building.x, y: building.y, w: building.w, h: building.h });
+    }
+  }
+
+  nearestBuilding(player) {
+    let best = null;
+    let bestD = Infinity;
+    for (const building of this.buildings) {
+      const cx = building.x + building.w / 2;
+      const cy = building.y + building.h / 2;
+      const d = Math.hypot(player.x - cx, player.y - cy);
+      if (d < building.radius && d < bestD) {
+        best = building;
+        bestD = d;
+      }
+    }
+    return best;
+  }
+
+  draw(ctx, game) {
+    ctx.save();
+    ctx.fillStyle = '#294c35';
+    ctx.fillRect(0, 0, this.width, this.height);
+
+    // Comic-style boundary forest.
+    for (let i = 0; i < 34; i += 1) {
+      const x = (i * 137) % this.width;
+      const y = i % 2 === 0 ? 50 + ((i * 53) % 140) : this.height - 80 - ((i * 47) % 150);
+      this.drawTree(ctx, x, y, 36 + (i % 5) * 5, i % 3 === 0);
+    }
+
+    // Main base paths.
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#17101f';
+    ctx.lineWidth = 78;
+    ctx.beginPath();
+    ctx.moveTo(this.start.x, this.start.y);
+    for (const b of this.buildings) {
+      ctx.moveTo(this.start.x, this.start.y);
+      ctx.lineTo(b.x + b.w / 2, b.y + b.h / 2);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = '#8b7645';
+    ctx.lineWidth = 58;
+    ctx.stroke();
+    ctx.strokeStyle = '#b9965a';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([18, 18]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Training ring.
+    ctx.save();
+    ctx.strokeStyle = '#ffecc7';
+    ctx.fillStyle = 'rgba(255, 209, 102, 0.08)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(830, 972, 174, 96, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    drawOutlinedText(ctx, 'TRAINING', 830, 973, { size: 18, color: '#ffecc7' });
+    ctx.restore();
+
+    // Buildings.
+    for (const building of this.buildings) this.drawBuilding(ctx, building, game);
+
+    // Obstacles after paths for silhouettes.
+    for (const obstacle of this.obstacles) {
+      if (obstacle.type === 'tree') this.drawTree(ctx, obstacle.x, obstacle.y, obstacle.r, true);
+      else this.drawRock(ctx, obstacle.x, obstacle.y, obstacle.r);
+    }
+
+    drawOutlinedText(ctx, 'Blood Hunter Base', this.start.x, this.start.y - 82, { size: 24, color: '#ffd166' });
+    drawOutlinedText(ctx, 'Something is corrupting the world. Hunt monsters and discover why.', this.start.x, this.start.y - 52, {
+      size: 13,
+      color: '#ffecc7',
+      width: 4
+    });
+    ctx.restore();
+  }
+
+  drawBuilding(ctx, building, game) {
+    const cx = building.x + building.w / 2;
+    const cy = building.y + building.h / 2;
+    const active = Math.hypot(game.player.x - cx, game.player.y - cy) < building.radius;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.38)';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 10;
+    ctx.fillStyle = active ? 'rgba(255,209,102,0.18)' : 'rgba(0,0,0,0.1)';
+    ctx.beginPath();
+    ctx.ellipse(cx, building.y + building.h + 16, building.w * 0.6, 28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    drawRoundedRect(ctx, building.x, building.y + 35, building.w, building.h - 35, 16);
+    ctx.fillStyle = building.color;
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#0a0610';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(building.x - 18, building.y + 44);
+    ctx.lineTo(cx, building.y - 14);
+    ctx.lineTo(building.x + building.w + 18, building.y + 44);
+    ctx.closePath();
+    ctx.fillStyle = building.roof;
+    ctx.fill();
+    ctx.strokeStyle = '#0a0610';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    if (building.id === 'world_map') {
+      ctx.save();
+      ctx.globalAlpha = 0.9;
+      ctx.strokeStyle = active ? '#ffd166' : '#70e8ff';
+      ctx.lineWidth = active ? 8 : 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 66 + Math.sin(game.time * 3) * 4, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(112,232,255,0.22)';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.fillStyle = '#ffecc7';
+    ctx.strokeStyle = '#08040d';
+    ctx.lineWidth = 5;
+    ctx.font = '900 36px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.strokeText(building.icon, cx, building.y + building.h / 2 + 20);
+    ctx.fillText(building.icon, cx, building.y + building.h / 2 + 20);
+
+    drawOutlinedText(ctx, building.label, cx, building.y + building.h + 32, {
+      size: active ? 17 : 15,
+      color: active ? '#ffd166' : '#ffecc7'
+    });
+    drawOutlinedText(ctx, building.subtitle, cx, building.y + building.h + 53, { size: 11, color: '#cbb7d9', width: 3 });
+    ctx.restore();
+  }
+
+  drawTree(ctx, x, y, r, dark = false) {
+    ctx.save();
+    ctx.fillStyle = '#15100d';
+    ctx.beginPath();
+    drawRoundedRect(ctx, x - r * 0.15, y + r * 0.1, r * 0.3, r * 0.92, 8);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * 0.88, r * 0.72, 0, 0, Math.PI * 2);
+    ctx.fillStyle = dark ? '#1f5736' : '#2f7d48';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#0a0610';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.22, y - r * 0.17, r * 0.32, r * 0.23, -0.4, 0, Math.PI * 2);
+    ctx.fillStyle = dark ? '#2d7444' : '#54a75d';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  drawRock(ctx, x, y, r) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x - r, y + r * 0.25);
+    ctx.lineTo(x - r * 0.45, y - r * 0.7);
+    ctx.lineTo(x + r * 0.42, y - r * 0.82);
+    ctx.lineTo(x + r, y + r * 0.12);
+    ctx.lineTo(x + r * 0.32, y + r * 0.78);
+    ctx.closePath();
+    ctx.fillStyle = '#6e7180';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#0a0610';
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+class ProceduralForest {
+  constructor(seed = Date.now()) {
+    this.kind = 'hunt';
+    this.seed = seed;
+    this.rng = new RNG(seed);
+    this.width = 2700;
+    this.height = 1900;
+    this.boundsPadding = 26;
+    this.rooms = [];
+    this.corridors = [];
+    this.obstacles = [];
+    this.chests = [];
+    this.shrines = [];
+    this.exits = [];
+    this.enemySpawns = [];
+    this.miniBossId = null;
+    this.generate();
+  }
+
+  getStartPosition() {
+    return { x: this.start.x, y: this.start.y };
+  }
+
+  generate() {
+    const rng = this.rng;
+    const roomTypes = ['clearing', 'river', 'ruins', 'cave', 'mushroom_grove', 'fallen_tower'];
+    const pathRooms = [];
+    let y = rng.range(this.height * 0.35, this.height * 0.65);
+    const count = 8;
+    for (let i = 0; i < count; i += 1) {
+      y = clamp(y + rng.range(-210, 210), 245, this.height - 245);
+      const room = {
+        id: `path-${i}`,
+        x: 250 + i * 310 + rng.range(-44, 44),
+        y,
+        w: rng.range(230, 335) + i * 8,
+        h: rng.range(175, 280),
+        type: i === 0 ? 'hunter_camp' : i === count - 1 ? 'boss_grove' : rng.pick(roomTypes),
+        criticalPath: true,
+        secret: false,
+        discovered: i === 0,
+        danger: i / (count - 1)
+      };
+      pathRooms.push(room);
+      this.rooms.push(room);
+      if (i > 0) this.corridors.push({ a: pathRooms[i - 1], b: room, width: rng.range(100, 148) });
+    }
+
+    this.start = { x: pathRooms[0].x - 52, y: pathRooms[0].y };
+    this.bossRoom = pathRooms[pathRooms.length - 1];
+    this.boss = { x: this.bossRoom.x + 26, y: this.bossRoom.y };
+
+    // Secret branches: visible if explored, always connected to avoid impossible layouts.
+    const branchSourceIndexes = rng.shuffle([2, 3, 4, 5, 6]).slice(0, 3);
+    for (const [branchIndex, sourceIndex] of branchSourceIndexes.entries()) {
+      const source = pathRooms[sourceIndex];
+      const sign = rng.chance(0.5) ? -1 : 1;
+      const room = {
+        id: `secret-${branchIndex}`,
+        x: clamp(source.x + rng.range(-80, 150), 230, this.width - 230),
+        y: clamp(source.y + sign * rng.range(285, 395), 230, this.height - 230),
+        w: rng.range(210, 285),
+        h: rng.range(160, 235),
+        type: rng.pick(['hidden_cache', 'cave', 'ruins', 'shrine_grove']),
+        criticalPath: false,
+        secret: true,
+        discovered: false,
+        danger: sourceIndex / (count - 1) + 0.15
+      };
+      this.rooms.push(room);
+      this.corridors.push({ a: source, b: room, width: rng.range(66, 92), secret: true });
+    }
+
+    this.generateInteractables();
+    this.generateEnemySpawns();
+    this.generateObstacles();
+  }
+
+  generateInteractables() {
+    const rng = this.rng;
+    for (const room of this.rooms) {
+      if (room.type === 'hunter_camp' || room.type === 'boss_grove') continue;
+      if (room.secret || rng.chance(0.54)) {
+        this.chests.push({
+          id: `chest-${this.chests.length}`,
+          x: room.x + rng.range(-room.w * 0.26, room.w * 0.26),
+          y: room.y + rng.range(-room.h * 0.25, room.h * 0.25),
+          opened: false,
+          hidden: room.secret || rng.chance(0.2),
+          discovered: !room.secret && !rng.chance(0.2),
+          dangerous: room.secret || rng.chance(0.18),
+          roomId: room.id
+        });
+      }
+      if (!room.secret && rng.chance(0.28)) {
+        this.shrines.push({
+          id: `shrine-${this.shrines.length}`,
+          x: room.x + rng.range(-room.w * 0.22, room.w * 0.22),
+          y: room.y + rng.range(-room.h * 0.22, room.h * 0.22),
+          used: false,
+          roomId: room.id
+        });
+      }
+    }
+    // Ensure at least one temporary ability source per hunt.
+    if (!this.shrines.length) {
+      const room = this.rooms.find((r) => r.id === 'path-3') || this.rooms[2];
+      this.shrines.push({ id: 'shrine-guaranteed', x: room.x, y: room.y - room.h * 0.24, used: false, roomId: room.id });
+    }
+
+    this.exits.push({
+      id: 'entry_exit',
+      label: 'Return to Base',
+      x: this.start.x - 42,
+      y: this.start.y,
+      r: 45,
+      unlocked: true,
+      discovered: true
+    });
+    this.exits.push({
+      id: 'boss_exit',
+      label: 'Escape Portal',
+      x: this.boss.x + 105,
+      y: this.boss.y,
+      r: 50,
+      unlocked: false,
+      discovered: false
+    });
+  }
+
+  generateEnemySpawns() {
+    const rng = this.rng;
+    const basicWeightsByDepth = (depth) => [
+      { value: 'wolf', weight: 5 - depth * 1.5 },
+      { value: 'goblin', weight: 4.4 },
+      { value: 'goblin_archer', weight: 1.1 + depth * 2.2 },
+      { value: 'mage', weight: Math.max(0.2, depth * 2.1) },
+      { value: 'brute', weight: Math.max(0.15, depth * 1.7) }
+    ];
+
+    for (const room of this.rooms) {
+      if (room.type === 'hunter_camp') continue;
+      if (room.type === 'boss_grove') continue;
+      const depth = clamp(room.danger !== undefined ? room.danger : 0.2, 0, 1);
+      let count = room.secret ? rng.int(2, 4) : rng.int(1, 2 + Math.floor(depth * 3));
+      if (room.secret) count += 1;
+      for (let i = 0; i < count; i += 1) {
+        const type = rng.weighted(basicWeightsByDepth(depth));
+        this.enemySpawns.push({
+          type,
+          x: room.x + rng.range(-room.w * 0.32, room.w * 0.32),
+          y: room.y + rng.range(-room.h * 0.32, room.h * 0.32),
+          roomId: room.id,
+          patrolRadius: Math.max(room.w, room.h) * 0.36
+        });
+      }
+      if (room.secret && rng.chance(0.65)) {
+        this.enemySpawns.push({
+          type: rng.pick(['brute', 'mage']),
+          x: room.x + rng.range(-room.w * 0.2, room.w * 0.2),
+          y: room.y + rng.range(-room.h * 0.2, room.h * 0.2),
+          roomId: room.id,
+          patrolRadius: 120
+        });
+      }
+    }
+
+    this.miniBossId = rng.pick(Object.keys(MINI_BOSSES));
+    this.enemySpawns.push({
+      type: this.miniBossId,
+      boss: true,
+      x: this.boss.x,
+      y: this.boss.y,
+      roomId: this.bossRoom.id,
+      patrolRadius: 220
+    });
+  }
+
+  generateObstacles() {
+    const rng = this.rng;
+    const isSafe = (x, y, r) => {
+      if (Math.hypot(x - this.start.x, y - this.start.y) < 150 + r) return false;
+      for (const room of this.rooms) {
+        const nx = Math.abs(x - room.x) / (room.w * 0.5 + r);
+        const ny = Math.abs(y - room.y) / (room.h * 0.5 + r);
+        // Keep inner encounter spaces mostly clear.
+        if (nx * nx + ny * ny < 0.88) return false;
+      }
+      for (const c of this.corridors) {
+        if (distanceToSegment(x, y, c.a.x, c.a.y, c.b.x, c.b.y) < c.width * 0.55 + r) return false;
+      }
+      return true;
+    };
+
+    let attempts = 0;
+    while (this.obstacles.length < 210 && attempts < 2000) {
+      attempts += 1;
+      const x = rng.range(60, this.width - 60);
+      const y = rng.range(60, this.height - 60);
+      const r = rng.range(16, 42);
+      if (isSafe(x, y, r)) {
+        this.obstacles.push({ x, y, r, type: rng.chance(0.78) ? 'tree' : 'rock', hue: rng.range(-12, 12) });
+      }
+    }
+  }
+
+  markDiscovered(player, game) {
+    for (const room of this.rooms) {
+      if (room.discovered) continue;
+      const nx = Math.abs(player.x - room.x) / (room.w * 0.62);
+      const ny = Math.abs(player.y - room.y) / (room.h * 0.62);
+      if (nx * nx + ny * ny < 1) {
+        room.discovered = true;
+        if (room.secret) {
+          game.save.data.player.stats.secretsFound += 1;
+          game.notify('Secret path discovered!', 'good');
+        }
+      }
+    }
+    for (const chest of this.chests) {
+      if (!chest.discovered && Math.hypot(player.x - chest.x, player.y - chest.y) < 120) {
+        chest.discovered = true;
+        game.notify(chest.dangerous ? 'Dangerous hidden chest found!' : 'Hidden chest found!', chest.dangerous ? 'danger' : 'good');
+      }
+    }
+  }
+
+  unlockBossExit() {
+    const exit = this.exits.find((e) => e.id === 'boss_exit');
+    if (exit) {
+      exit.unlocked = true;
+      exit.discovered = true;
+    }
+  }
+
+  resolveCollision(entity) {
+    entity.x = clamp(entity.x, this.boundsPadding + entity.radius, this.width - this.boundsPadding - entity.radius);
+    entity.y = clamp(entity.y, this.boundsPadding + entity.radius, this.height - this.boundsPadding - entity.radius);
+    for (const obstacle of this.obstacles) resolveCircleObstacle(entity, obstacle);
+  }
+
+  nearestInteractive(player) {
+    let best = null;
+    let bestDistance = Infinity;
+    for (const chest of this.chests) {
+      if (chest.opened || !chest.discovered) continue;
+      const d = Math.hypot(player.x - chest.x, player.y - chest.y);
+      if (d < 82 && d < bestDistance) {
+        best = { type: 'chest', label: chest.dangerous ? 'Open Risk Chest' : 'Open Chest', target: chest };
+        bestDistance = d;
+      }
+    }
+    for (const shrine of this.shrines) {
+      if (shrine.used) continue;
+      const d = Math.hypot(player.x - shrine.x, player.y - shrine.y);
+      if (d < 90 && d < bestDistance) {
+        best = { type: 'shrine', label: 'Choose Ability', target: shrine };
+        bestDistance = d;
+      }
+    }
+    for (const exit of this.exits) {
+      if (!exit.unlocked || !exit.discovered) continue;
+      const d = Math.hypot(player.x - exit.x, player.y - exit.y);
+      if (d < exit.r + 42 && d < bestDistance) {
+        best = { type: 'exit', label: exit.label, target: exit };
+        bestDistance = d;
+      }
+    }
+    return best;
+  }
+
+  draw(ctx, game) {
+    ctx.save();
+    ctx.fillStyle = '#1d3d2a';
+    ctx.fillRect(0, 0, this.width, this.height);
+
+    // Outer comic forest silhouettes.
+    ctx.fillStyle = '#132719';
+    ctx.fillRect(0, 0, this.width, 50);
+    ctx.fillRect(0, this.height - 50, this.width, 50);
+    ctx.fillRect(0, 0, 50, this.height);
+    ctx.fillRect(this.width - 50, 0, 50, this.height);
+
+    // Corridors first.
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (const corridor of this.corridors) {
+      const alpha = corridor.secret && !corridor.b.discovered ? 0.42 : 1;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = '#0b0711';
+      ctx.lineWidth = corridor.width + 14;
+      ctx.beginPath();
+      ctx.moveTo(corridor.a.x, corridor.a.y);
+      const midX = (corridor.a.x + corridor.b.x) / 2;
+      ctx.quadraticCurveTo(midX, corridor.a.y, corridor.b.x, corridor.b.y);
+      ctx.stroke();
+      ctx.strokeStyle = corridor.secret ? '#536a36' : '#6b7642';
+      ctx.lineWidth = corridor.width;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255, 236, 199, 0.13)';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([20, 24]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    for (const room of this.rooms) this.drawRoom(ctx, room, game);
+
+    // Environmental obstacles.
+    for (const obstacle of this.obstacles) {
+      if (obstacle.type === 'tree') this.drawTree(ctx, obstacle.x, obstacle.y, obstacle.r, obstacle.hue);
+      else this.drawRock(ctx, obstacle.x, obstacle.y, obstacle.r);
+    }
+
+    for (const exit of this.exits) this.drawExit(ctx, exit, game.time);
+    for (const shrine of this.shrines) this.drawShrine(ctx, shrine, game.time);
+    for (const chest of this.chests) this.drawChest(ctx, chest, game.time);
+    ctx.restore();
+  }
+
+  drawRoom(ctx, room, game) {
+    const hidden = room.secret && !room.discovered;
+    ctx.save();
+    ctx.globalAlpha = hidden ? 0.44 : 1;
+    ctx.beginPath();
+    ctx.ellipse(room.x, room.y, room.w * 0.52, room.h * 0.52, 0, 0, Math.PI * 2);
+    ctx.fillStyle = room.type === 'boss_grove' ? '#42344c' : room.secret ? '#4a5b35' : '#61753d';
+    ctx.fill();
+    ctx.lineWidth = room.secret ? 5 : 3;
+    ctx.strokeStyle = room.secret ? '#ffe066' : 'rgba(15, 8, 18, 0.7)';
+    ctx.stroke();
+
+    if (room.type === 'river') {
+      ctx.save();
+      ctx.clip();
+      ctx.strokeStyle = '#19334f';
+      ctx.lineWidth = 54;
+      ctx.beginPath();
+      ctx.moveTo(room.x - room.w * 0.55, room.y + room.h * 0.1);
+      ctx.bezierCurveTo(room.x - 40, room.y - room.h * 0.4, room.x + 30, room.y + room.h * 0.45, room.x + room.w * 0.6, room.y - room.h * 0.12);
+      ctx.stroke();
+      ctx.strokeStyle = '#50b6d8';
+      ctx.lineWidth = 38;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (room.type === 'ruins' || room.type === 'fallen_tower') {
+      ctx.fillStyle = '#7d807d';
+      ctx.strokeStyle = '#0a0610';
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 4; i += 1) {
+        const x = room.x - room.w * 0.28 + i * room.w * 0.18;
+        const y = room.y + (i % 2 ? -room.h * 0.22 : room.h * 0.18);
+        drawRoundedRect(ctx, x, y, 45, 28, 7);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+
+    if (room.type === 'cave' || room.type === 'hidden_cache') {
+      ctx.beginPath();
+      ctx.ellipse(room.x + room.w * 0.18, room.y - room.h * 0.1, 45, 34, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#15111d';
+      ctx.fill();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#0a0610';
+      ctx.stroke();
+    }
+
+    if (room.type === 'mushroom_grove' || room.type === 'shrine_grove') {
+      for (let i = 0; i < 7; i += 1) {
+        const a = (i / 7) * Math.PI * 2;
+        const x = room.x + Math.cos(a) * room.w * 0.28;
+        const y = room.y + Math.sin(a) * room.h * 0.24;
+        ctx.beginPath();
+        ctx.ellipse(x, y, 10, 7, 0, 0, Math.PI * 2);
+        ctx.fillStyle = i % 2 ? '#b68cff' : '#ff6b91';
+        ctx.fill();
+        ctx.strokeStyle = '#0a0610';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    if (room.type === 'boss_grove') {
+      ctx.save();
+      ctx.strokeStyle = `rgba(229,44,89,${0.25 + Math.sin(game.time * 3) * 0.08})`;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.ellipse(room.x, room.y, room.w * 0.38, room.h * 0.38, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      drawOutlinedText(ctx, 'MINI-BOSS GROVE', room.x, room.y - room.h * 0.45, { size: 14, color: '#ff9bb0' });
+      ctx.restore();
+    }
+
+    if (room.secret && room.discovered) {
+      drawOutlinedText(ctx, 'SECRET', room.x, room.y - room.h * 0.42, { size: 12, color: '#ffd166', width: 4 });
+    }
+    ctx.restore();
+  }
+
+  drawExit(ctx, exit, time) {
+    if (!exit.discovered) return;
+    ctx.save();
+    ctx.globalAlpha = exit.unlocked ? 1 : 0.22;
+    const pulse = Math.sin(time * 4) * 4;
+    ctx.beginPath();
+    ctx.arc(exit.x, exit.y, exit.r + pulse, 0, Math.PI * 2);
+    ctx.strokeStyle = exit.id === 'entry_exit' ? '#70e8ff' : '#ffd166';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(exit.x, exit.y, exit.r * 0.55, 0, Math.PI * 2);
+    ctx.fillStyle = exit.id === 'entry_exit' ? 'rgba(112,232,255,0.18)' : 'rgba(255,209,102,0.22)';
+    ctx.fill();
+    drawOutlinedText(ctx, exit.label, exit.x, exit.y + exit.r + 24, { size: 12, color: '#ffecc7', width: 4 });
+    ctx.restore();
+  }
+
+  drawShrine(ctx, shrine, time) {
+    if (shrine.used) return;
+    ctx.save();
+    ctx.translate(shrine.x, shrine.y);
+    ctx.strokeStyle = '#0a0610';
+    ctx.lineWidth = 4;
+    ctx.fillStyle = '#4b306d';
+    ctx.beginPath();
+    ctx.moveTo(0, -28);
+    ctx.lineTo(24, 18);
+    ctx.lineTo(-24, 18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, -5, 8 + Math.sin(time * 5) * 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffd166';
+    ctx.fill();
+    drawOutlinedText(ctx, 'Shrine', 0, 44, { size: 12, color: '#ffecc7', width: 3 });
+    ctx.restore();
+  }
+
+  drawChest(ctx, chest, time) {
+    if (!chest.discovered || chest.opened) return;
+    ctx.save();
+    ctx.translate(chest.x, chest.y);
+    ctx.globalAlpha = chest.hidden ? 0.9 : 1;
+    const glow = chest.dangerous ? '#ff315f' : '#ffd166';
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 10 + Math.sin(time * 4) * 4;
+    ctx.fillStyle = chest.dangerous ? '#7e1233' : '#8a5a20';
+    drawRoundedRect(ctx, -24, -16, 48, 32, 7);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#0a0610';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.fillStyle = '#ffd166';
+    ctx.fillRect(-4, -16, 8, 32);
+    ctx.fillRect(-22, -2, 44, 8);
+    drawOutlinedText(ctx, chest.dangerous ? 'Risk' : 'Chest', 0, 38, { size: 11, color: chest.dangerous ? '#ff9bb0' : '#ffecc7', width: 3 });
+    ctx.restore();
+  }
+
+  drawTree(ctx, x, y, r, hue = 0) {
+    ctx.save();
+    ctx.fillStyle = '#17100e';
+    drawRoundedRect(ctx, x - r * 0.13, y + r * 0.18, r * 0.26, r * 0.8, 7);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x, y, r, r * 0.75, 0, 0, Math.PI * 2);
+    ctx.fillStyle = hue > 0 ? '#315f3c' : '#244f34';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#0a0610';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.2, y - r * 0.15, r * 0.35, r * 0.23, -0.4, 0, Math.PI * 2);
+    ctx.fillStyle = hue > 0 ? '#438a50' : '#337542';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  drawRock(ctx, x, y, r) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x - r, y + r * 0.12);
+    ctx.lineTo(x - r * 0.42, y - r * 0.8);
+    ctx.lineTo(x + r * 0.5, y - r * 0.65);
+    ctx.lineTo(x + r, y + r * 0.24);
+    ctx.lineTo(x + r * 0.28, y + r * 0.8);
+    ctx.closePath();
+    ctx.fillStyle = '#59616b';
+    ctx.fill();
+    ctx.strokeStyle = '#0a0610';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// End src/systems/procedural-forest.js
+
+// Begin src/entities/entities.js
+let NEXT_ID = 1;
+
+function nextId(prefix) {
+  NEXT_ID += 1;
+  return `${prefix}-${NEXT_ID}`;
+}
+
+function attackProgress(attack) {
+  const duration = attack.spec.duration !== undefined ? attack.spec.duration : 1;
+  return clamp(attack.elapsed / Math.max(0.001, duration), 0, 1);
+}
+
+class Particle {
+  constructor({ x, y, vx = 0, vy = 0, life = 0.45, radius = 4, color = '#ffffff', gravity = 0, fade = true, type = 'circle' }) {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.life = life;
+    this.maxLife = life;
+    this.radius = radius;
+    this.color = color;
+    this.gravity = gravity;
+    this.fade = fade;
+    this.type = type;
+  }
+
+  update(dt) {
+    this.vy += this.gravity * dt;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.life -= dt;
+    return this.life > 0;
+  }
+
+  draw(ctx) {
+    const t = clamp(this.life / this.maxLife, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = this.fade ? smoothstep(t) : 1;
+    ctx.fillStyle = this.color;
+    ctx.strokeStyle = '#07040b';
+    ctx.lineWidth = 2;
+    if (this.type === 'slash') {
+      ctx.translate(this.x, this.y);
+      ctx.rotate(Math.atan2(this.vy, this.vx));
+      ctx.scale(1, 0.45);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, this.radius * (1.4 - t * 0.35), this.radius * 0.38, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (this.type === 'spark') {
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(this.x - this.vx * 0.035, this.y - this.vy * 0.035);
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = this.radius;
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius * (0.55 + t * 0.65), 0, TAU);
+      ctx.fill();
+      if (this.radius > 3) ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+class FloatingText {
+  constructor(text, x, y, { color = '#ffecc7', life = 0.8, size = 16 } = {}) {
+    this.text = text;
+    this.x = x;
+    this.y = y;
+    this.vy = -35;
+    this.life = life;
+    this.maxLife = life;
+    this.color = color;
+    this.size = size;
+  }
+
+  update(dt) {
+    this.y += this.vy * dt;
+    this.vy -= 8 * dt;
+    this.life -= dt;
+    return this.life > 0;
+  }
+
+  draw(ctx) {
+    const t = clamp(this.life / this.maxLife, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = smoothstep(t);
+    drawOutlinedText(ctx, this.text, this.x, this.y, { size: this.size, color: this.color, width: 5 });
+    ctx.restore();
+  }
+}
+
+class Pickup {
+  constructor({ x, y, kind, id, amount = 1, label = '', color = '#ffd166', weaponId = null }) {
+    this.id = nextId('pickup');
+    this.x = x;
+    this.y = y;
+    this.kind = kind;
+    this.itemId = id;
+    this.amount = amount;
+    this.label = label;
+    this.color = color;
+    this.weaponId = weaponId;
+    this.radius = kind === 'weapon' ? 16 : 11;
+    this.vx = (Math.random() - 0.5) * 130;
+    this.vy = (Math.random() - 0.5) * 130;
+    this.life = 120;
+    this.age = 0;
+  }
+
+  update(dt, game) {
+    this.age += dt;
+    this.life -= dt;
+    this.vx *= Math.pow(0.08, dt);
+    this.vy *= Math.pow(0.08, dt);
+    const dx = game.player.x - this.x;
+    const dy = game.player.y - this.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 112) {
+      const pull = 420 * (1 - dist / 112);
+      if (dist > 0.001) {
+        this.vx += (dx / dist) * pull * dt;
+        this.vy += (dy / dist) * pull * dt;
+      }
+    }
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    if (dist < game.player.radius + this.radius + 10) {
+      this.collect(game);
+      return false;
+    }
+    return this.life > 0;
+  }
+
+  collect(game) {
+    game.audio.play('loot');
+    if (this.kind === 'coins') {
+      game.addRunCoins(this.amount);
+      game.notify(`Coins +${this.amount}`, 'good');
+    } else if (this.kind === 'resource') {
+      game.addRunResource(this.itemId, this.amount);
+      const resourceName = RESOURCE_NAMES[this.itemId] !== undefined ? RESOURCE_NAMES[this.itemId] : this.itemId;
+      game.notify(`${resourceName} +${this.amount}`, 'good');
+    } else if (this.kind === 'weapon') {
+      game.addRunWeapon(this.weaponId);
+      game.notify(`${WEAPONS[this.weaponId].name} found! Extract to keep it.`, 'good');
+    }
+    for (let i = 0; i < 6; i += 1) {
+      game.addParticle(
+        new Particle({
+          x: this.x,
+          y: this.y,
+          vx: (Math.random() - 0.5) * 120,
+          vy: (Math.random() - 0.5) * 120,
+          life: 0.35,
+          radius: 3 + Math.random() * 3,
+          color: this.color
+        })
+      );
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    const bob = Math.sin(this.age * 7) * 3;
+    ctx.translate(this.x, this.y + bob);
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = this.color;
+    ctx.strokeStyle = '#08040d';
+    ctx.lineWidth = 3;
+    if (this.kind === 'coins') {
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+      drawOutlinedText(ctx, '$', 0, 0, { size: 14, color: '#5a3500', outline: 'rgba(255,255,255,0)', width: 0 });
+    } else if (this.kind === 'weapon') {
+      ctx.rotate(-0.65);
+      ctx.fillStyle = '#f7f0ff';
+      ctx.fillRect(-4, -20, 8, 40);
+      ctx.strokeRect(-4, -20, 8, 40);
+      ctx.fillStyle = '#e52c59';
+      ctx.fillRect(-10, 4, 20, 7);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(0, -this.radius);
+      ctx.lineTo(this.radius, 0);
+      ctx.lineTo(0, this.radius);
+      ctx.lineTo(-this.radius, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+class Projectile {
+  constructor({ x, y, vx, vy, damage, radius = 7, owner = null, color = '#ffe066', label = 'projectile' }) {
+    this.id = nextId('projectile');
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.damage = damage;
+    this.radius = radius;
+    this.owner = owner;
+    this.color = color;
+    this.label = label;
+    this.life = 3.2;
+    this.hit = false;
+  }
+
+  update(dt, game) {
+    this.life -= dt;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
+    const player = game.player;
+    if (!this.hit && Math.hypot(player.x - this.x, player.y - this.y) < player.radius + this.radius) {
+      this.hit = true;
+      player.takeDamage(this.damage, this.owner, game, { kind: 'projectile', label: this.label, knockback: 75 });
+      game.spawnImpact(this.x, this.y, this.color, 8);
+      return false;
+    }
+    return this.life > 0 && !this.hit;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(Math.atan2(this.vy, this.vx));
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = '#08040d';
+    ctx.fillStyle = this.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(15, 0);
+    ctx.lineTo(-10, -this.radius);
+    ctx.lineTo(-5, 0);
+    ctx.lineTo(-10, this.radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+class Player {
+  constructor(saveData) {
+    this.id = 'player';
+    this.x = 0;
+    this.y = 0;
+    this.radius = 19;
+    this.facing = -Math.PI / 2;
+    this.health = 1;
+    this.maxHealth = 1;
+    this.invulnerableTimer = 0;
+    this.attack = null;
+    this.queuedAction = null;
+    this.comboStep = 0;
+    this.comboExpire = 0;
+    this.comboBoost = false;
+    this.dashTimer = 0;
+    this.dashCooldown = 0;
+    this.dashVector = { x: 0, y: 0 };
+    this.specialCooldown = 0;
+    this.blocking = false;
+    this.blockStartTime = -99;
+    this.parryConsumed = false;
+    this.shadowCritTimer = 0;
+    this.tempAbilities = [];
+    this.modifiers = this.createEmptyModifiers();
+    this.syncFromSave(saveData, false);
+  }
+
+  createEmptyModifiers() {
+    return {
+      bleedDamageMult: 0,
+      dashCooldownMult: 0,
+      lowHealthDamageMult: 0,
+      bleedLifesteal: 0,
+      blockReduction: 0,
+      parrySpecialRefund: 0,
+      finisherDamageMult: 0,
+      finisherBleed: 0,
+      dashTrail: 0
+    };
+  }
+
+  syncFromSave(saveData, preserveHealthRatio = true) {
+    const ratio = preserveHealthRatio ? this.health / Math.max(1, this.maxHealth) : 1;
+    this.saveData = saveData;
+    this.maxHealth = this.getMaxHealth();
+    this.health = clamp(this.maxHealth * ratio, 1, this.maxHealth);
+  }
+
+  get level() {
+    return this.saveData.player.level;
+  }
+
+  get weaponId() {
+    return this.saveData.equipment.equippedWeapon;
+  }
+
+  get weaponRecord() {
+    return this.saveData.equipment.weapons[this.weaponId] || { owned: true, level: 1 };
+  }
+
+  get weapon() {
+    return WEAPONS[this.weaponId] || WEAPONS.bloodfang;
+  }
+
+  getMaxHealth() {
+    const armorLevel = this.saveData.equipment.armor.level;
+    return Math.round(PLAYER_BASE.maxHp + (this.saveData.player.level - 1) * PLAYER_BASE.levelHpGain + armorLevel * 14);
+  }
+
+  getStats() {
+    const levelDamage = 1 + (this.level - 1) * PLAYER_BASE.levelDamageGain;
+    const upgradeDamage = 1 + (Math.max(1, this.weaponRecord.level) - 1) * 0.16;
+    const lowHealth = this.health / this.maxHealth < 0.4 ? 1 + this.modifiers.lowHealthDamageMult : 1;
+    return {
+      damage: this.weapon.baseDamage * upgradeDamage * levelDamage * lowHealth,
+      bleedPower: this.weapon.bleedPower * (1 + this.modifiers.bleedDamageMult),
+      critChance: clamp(this.weapon.critChance + (this.shadowCritTimer > 0 ? 0.2 : 0), 0, 0.75),
+      critDamage: this.weapon.critDamage,
+      lifesteal: this.weapon.lifesteal,
+      armorReduction: clamp(this.saveData.equipment.armor.level * PLAYER_BASE.armorReductionPerLevel, 0, 0.36),
+      blockReduction: clamp(PLAYER_BASE.blockReduction + this.modifiers.blockReduction, 0, 0.84),
+      dashCooldown: Math.max(0.55, PLAYER_BASE.dashCooldown * (1 + this.modifiers.dashCooldownMult)),
+      specialCooldown: PLAYER_BASE.specialCooldown
+    };
+  }
+
+  resetForBase() {
+    this.tempAbilities = [];
+    this.modifiers = this.createEmptyModifiers();
+    this.attack = null;
+    this.queuedAction = null;
+    this.comboStep = 0;
+    this.comboExpire = 0;
+    this.dashCooldown = 0;
+    this.specialCooldown = 0;
+    this.dashTimer = 0;
+    this.blocking = false;
+    this.invulnerableTimer = 0;
+    this.health = this.maxHealth;
+  }
+
+  resetForHunt() {
+    this.resetForBase();
+    this.tempAbilities = [];
+    this.modifiers = this.createEmptyModifiers();
+  }
+
+  addRunAbility(ability) {
+    if (this.tempAbilities.some((a) => a.id === ability.id)) return;
+    this.tempAbilities.push(ability);
+    for (const [key, value] of Object.entries(ability.modifiers)) {
+      this.modifiers[key] = (this.modifiers[key] || 0) + value;
+    }
+  }
+
+  update(dt, game) {
+    this.invulnerableTimer = Math.max(0, this.invulnerableTimer - dt);
+    this.dashCooldown = Math.max(0, this.dashCooldown - dt);
+    this.specialCooldown = Math.max(0, this.specialCooldown - dt);
+    this.shadowCritTimer = Math.max(0, this.shadowCritTimer - dt);
+
+    const blockDown = game.input.isDown('block') && !this.attack && this.dashTimer <= 0;
+    if (blockDown && !this.blocking) {
+      this.blockStartTime = game.time;
+      this.parryConsumed = false;
+      game.audio.play('block', 0.75);
+    }
+    this.blocking = blockDown;
+
+    if (game.input.consume('dash')) this.tryDash(game);
+    if (game.input.consume('light')) this.queueOrStart('light', game);
+    if (game.input.consume('heavy')) this.queueOrStart('heavy', game);
+    if (game.input.consume('special')) this.queueOrStart('special', game);
+
+    this.updateAttack(dt, game);
+    this.updateMovement(dt, game);
+  }
+
+  updateMovement(dt, game) {
+    const input = game.input.move;
+    if (this.dashTimer > 0) {
+      this.dashTimer -= dt;
+      this.x += this.dashVector.x * PLAYER_BASE.dashSpeed * dt;
+      this.y += this.dashVector.y * PLAYER_BASE.dashSpeed * dt;
+      if (Math.random() < 0.9) {
+        game.addParticle(
+          new Particle({
+            x: this.x - this.dashVector.x * 14 + (Math.random() - 0.5) * 8,
+            y: this.y - this.dashVector.y * 14 + (Math.random() - 0.5) * 8,
+            vx: -this.dashVector.x * 55 + (Math.random() - 0.5) * 40,
+            vy: -this.dashVector.y * 55 + (Math.random() - 0.5) * 40,
+            life: 0.24 + this.modifiers.dashTrail,
+            radius: 7,
+            color: 'rgba(112,232,255,0.62)'
+          })
+        );
+      }
+    } else {
+      const stats = this.getStats();
+      let speed = PLAYER_BASE.moveSpeed;
+      if (this.blocking) speed *= 0.48;
+      if (this.attack) {
+        const moveLock = this.attack.spec.moveLock !== undefined ? this.attack.spec.moveLock : 0.65;
+        speed *= 1 - moveLock;
+      }
+      const strength = input.strength;
+      if (strength > 0.08) {
+        const nx = input.x;
+        const ny = input.y;
+        this.x += nx * speed * strength * dt;
+        this.y += ny * speed * strength * dt;
+        if (!this.attack && !this.blocking) this.facing = Math.atan2(ny, nx);
+      }
+      if (stats.dashCooldown < this.dashCooldown) this.dashCooldown = Math.min(this.dashCooldown, stats.dashCooldown);
+    }
+    if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
+  }
+
+  tryDash(game) {
+    if (this.dashCooldown > 0 || this.attack || this.blocking) return;
+    const input = game.input.move;
+    let dx = input.x;
+    let dy = input.y;
+    if (input.strength < 0.12) {
+      dx = Math.cos(this.facing);
+      dy = Math.sin(this.facing);
+    }
+    const n = normalize(dx, dy);
+    if (n.len <= 0.001) return;
+    this.dashVector.x = n.x;
+    this.dashVector.y = n.y;
+    this.facing = Math.atan2(n.y, n.x);
+    this.dashTimer = PLAYER_BASE.dashDuration;
+    this.dashCooldown = this.getStats().dashCooldown;
+    this.invulnerableTimer = PLAYER_BASE.dashDuration + 0.08;
+    this.comboStep = 0;
+    game.audio.play('dash');
+    game.spawnText('Evade', this.x, this.y - 32, '#70e8ff', 13);
+  }
+
+  queueOrStart(kind, game) {
+    if (this.blocking || this.dashTimer > 0) return;
+    if (this.attack) {
+      // Input buffer makes taps responsive without letting button mashing skip recovery.
+      this.queuedAction = { kind, time: game.time };
+      return;
+    }
+    this.startAttackKind(kind, game);
+  }
+
+  startAttackKind(kind, game, forceSpec = null) {
+    const now = game.time;
+    let spec = forceSpec;
+    let nextComboStep = 0;
+    let comboBoost = false;
+    if (!spec) {
+      if (now > this.comboExpire) this.comboStep = 0;
+      if (kind === 'light') {
+        if (this.comboStep === 1 && now <= this.comboExpire) {
+          spec = ATTACKS.light2;
+          nextComboStep = 2;
+        } else {
+          spec = ATTACKS.light1;
+          nextComboStep = 1;
+        }
+      } else if (kind === 'heavy') {
+        if (this.comboStep === 2 && now <= this.comboExpire) {
+          spec = ATTACKS.finisher;
+          nextComboStep = 3;
+        } else {
+          spec = ATTACKS.heavy;
+          nextComboStep = 0;
+        }
+      } else if (kind === 'special') {
+        if (this.specialCooldown > 0) {
+          game.spawnText('Cooldown', this.x, this.y - 46, '#b7fbff', 13);
+          return;
+        }
+        spec = ATTACKS.special;
+        comboBoost = this.comboStep === 3 && now <= this.comboExpire;
+        nextComboStep = 4;
+        this.specialCooldown = this.getStats().specialCooldown * (comboBoost ? 0.75 : 1);
+      }
+    }
+
+    if (!spec) return;
+    const target = game.findNearestEnemy(this, spec.range + 150);
+    if (target) this.facing = angleTo(this, target);
+    this.attack = {
+      spec,
+      elapsed: 0,
+      hitIds: new Set(),
+      visualSpawned: false,
+      comboBoost
+    };
+    this.comboStep = nextComboStep;
+    this.comboBoost = comboBoost;
+    this.comboExpire = now + spec.duration + 0.58;
+    if (spec.id === 'special') game.audio.play('special');
+    else game.audio.play(spec.id === 'heavy' || spec.id === 'finisher' || spec.id === 'counter' ? 'heavy' : 'light');
+    game.spawnSlash(this.x, this.y, this.facing, spec);
+  }
+
+  updateAttack(dt, game) {
+    if (!this.attack) return;
+    const attack = this.attack;
+    attack.elapsed += dt;
+    const spec = attack.spec;
+    if (!attack.visualSpawned && attack.elapsed >= spec.activeStart) {
+      attack.visualSpawned = true;
+      if (spec.id === 'special') game.spawnShockwave(this.x, this.y, spec.range, '#e52c59');
+    }
+    if (attack.elapsed >= spec.activeStart && attack.elapsed <= spec.activeEnd) {
+      this.applyAttackHits(game, attack);
+    }
+    if (attack.elapsed >= spec.duration) {
+      this.attack = null;
+      const queued = this.queuedAction;
+      this.queuedAction = null;
+      if (queued && game.time - queued.time < 0.42) {
+        this.startAttackKind(queued.kind, game);
+      }
+    }
+  }
+
+  applyAttackHits(game, attack) {
+    const spec = attack.spec;
+    const stats = this.getStats();
+    for (const enemy of game.enemies) {
+      if (enemy.dead || attack.hitIds.has(enemy.id)) continue;
+      const dx = enemy.x - this.x;
+      const dy = enemy.y - this.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > spec.range + enemy.radius) continue;
+      const dir = Math.atan2(dy, dx);
+      if (spec.arc < TAU - 0.1 && Math.abs(angleDiff(dir, this.facing)) > spec.arc / 2) continue;
+      attack.hitIds.add(enemy.id);
+      let damage = stats.damage * spec.damageMult;
+      if (spec.id === 'finisher') damage *= 1 + this.modifiers.finisherDamageMult;
+      if (attack.comboBoost) damage *= 1.16;
+      let crit = Math.random() < stats.critChance;
+      if (crit) damage *= stats.critDamage;
+
+      let bleedStacks = spec.bleed;
+      if (this.weapon.effect === 'bloodfang' && (spec.id === 'heavy' || spec.id === 'finisher')) bleedStacks += 1;
+      if (spec.id === 'finisher') bleedStacks += this.modifiers.finisherBleed;
+      const result = enemy.takeDamage(damage, this, game, {
+        crit,
+        attackId: spec.id,
+        angle: this.facing,
+        bleedStacks,
+        bleedPower: stats.bleedPower,
+        knockback: spec.knockback,
+        stagger: spec.id === 'counter' ? 0.78 : spec.id === 'finisher' ? 0.18 : 0,
+        dot: false
+      });
+      if (result) this.onHitEnemy(enemy, damage, crit, spec, game);
+    }
+  }
+
+  onHitEnemy(enemy, damage, crit, spec, game) {
+    const stats = this.getStats();
+    let heal = Math.min(5.5, damage * stats.lifesteal);
+    if (enemy.isBleeding()) heal += Math.min(5, damage * (0.015 + this.modifiers.bleedLifesteal));
+    if (spec.id === 'special') heal += Math.min(10, damage * 0.055);
+    if (heal > 0.08) this.heal(heal, game, spec.id === 'special' ? 'Blood heal' : 'Lifesteal');
+
+    if (this.weapon.effect === 'storm' && (spec.id === 'heavy' || spec.id === 'finisher' || spec.id === 'special') && Math.random() < 0.32) {
+      game.chainLightning(enemy, Math.max(5, damage * 0.32));
+    }
+    if (this.weapon.effect === 'ember' && (spec.id === 'heavy' || spec.id === 'finisher' || spec.id === 'special')) {
+      enemy.applyBurn(3.2, Math.max(1.3, damage * 0.045));
+    }
+    if (crit) game.audio.play('crit');
+  }
+
+  heal(amount, game, label = '+HP') {
+    if (this.health <= 0) return;
+    const before = this.health;
+    this.health = clamp(this.health + amount, 0, this.maxHealth);
+    const gained = this.health - before;
+    if (gained > 0.35) {
+      game.spawnText(`+${Math.round(gained)}`, this.x, this.y - 48, '#8cff7e', 14);
+      for (let i = 0; i < 4; i += 1) {
+        game.addParticle(
+          new Particle({
+            x: this.x + (Math.random() - 0.5) * 22,
+            y: this.y + (Math.random() - 0.5) * 22,
+            vx: (Math.random() - 0.5) * 50,
+            vy: -20 - Math.random() * 50,
+            life: 0.42,
+            radius: 3 + Math.random() * 3,
+            color: '#8cff7e'
+          })
+        );
+      }
+    }
+  }
+
+  takeDamage(amount, source, game, info = {}) {
+    if (this.health <= 0) return { dead: true };
+    if (this.invulnerableTimer > 0) {
+      game.spawnText('DODGED', this.x, this.y - 48, '#70e8ff', 13);
+      return { dodged: true };
+    }
+
+    const stats = this.getStats();
+    let finalDamage = amount;
+    const canParry = this.blocking && game.time - this.blockStartTime <= PLAYER_BASE.parryWindow && !this.parryConsumed;
+    if (canParry && source) {
+      this.parryConsumed = true;
+      this.perfectParry(source, game);
+      return { parried: true };
+    }
+
+    if (this.blocking) {
+      finalDamage *= 1 - stats.blockReduction;
+      game.audio.play('block');
+      game.spawnText('Blocked', this.x, this.y - 48, '#b7fbff', 13);
+      game.screenShake = Math.max(game.screenShake, 4);
+    } else {
+      finalDamage *= 1 - stats.armorReduction;
+      this.invulnerableTimer = 0.28;
+      game.audio.play('enemy');
+      game.screenShake = Math.max(game.screenShake, 9);
+    }
+
+    finalDamage = Math.max(1, finalDamage);
+    this.health = clamp(this.health - finalDamage, 0, this.maxHealth);
+    game.spawnText(`-${Math.round(finalDamage)}`, this.x, this.y - 58, '#ff6b91', 16);
+    if (source && info.knockback) {
+      const a = angleTo(source, this);
+      this.x += Math.cos(a) * Math.min(20, info.knockback * 0.12);
+      this.y += Math.sin(a) * Math.min(20, info.knockback * 0.12);
+    }
+    if (this.health <= 0) game.handlePlayerDeath();
+    return { damage: finalDamage };
+  }
+
+  perfectParry(source, game) {
+    this.facing = angleTo(this, source);
+    source.staggerTimer = Math.max(source.staggerTimer, 1.0);
+    source.attack = null;
+    source.cooldown = Math.max(source.cooldown, 0.75);
+    if (this.weapon.effect === 'shadow') this.shadowCritTimer = 3;
+    this.specialCooldown = Math.max(0, this.specialCooldown - this.modifiers.parrySpecialRefund);
+    game.save.data.player.stats.perfectParries += 1;
+    game.audio.play('parry', 1.25);
+    game.hitStop = Math.max(game.hitStop, 0.1);
+    game.timeSlow = Math.max(game.timeSlow, 0.18);
+    game.screenShake = Math.max(game.screenShake, 14);
+    game.flash('#fff2a8', 0.23);
+    game.notify('PERFECT PARRY!', 'parry');
+    game.spawnText('PERFECT PARRY!', this.x, this.y - 76, '#fff2a8', 20);
+    for (let i = 0; i < 18; i += 1) {
+      const a = Math.random() * TAU;
+      const s = 120 + Math.random() * 260;
+      game.addParticle(
+        new Particle({
+          x: this.x + Math.cos(a) * 10,
+          y: this.y + Math.sin(a) * 10,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s,
+          life: 0.22 + Math.random() * 0.22,
+          radius: 3 + Math.random() * 3,
+          color: i % 2 ? '#fff2a8' : '#70e8ff',
+          type: i % 3 === 0 ? 'spark' : 'circle'
+        })
+      );
+    }
+    this.heal(5, game, 'Parry heal');
+    if (Math.hypot(source.x - this.x, source.y - this.y) > ATTACKS.counter.range + source.radius) {
+      const stats = this.getStats();
+      source.takeDamage(stats.damage * 1.65, this, game, {
+        crit: false,
+        attackId: 'counter',
+        angle: angleTo(this, source),
+        bleedStacks: 2,
+        bleedPower: stats.bleedPower,
+        knockback: 55,
+        stagger: 0.8
+      });
+    }
+    this.startAttackKind('counter', game, ATTACKS.counter);
+  }
+
+  draw(ctx, game) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    const cosmetics = this.saveData.cosmetics;
+    const invulnFlash = this.invulnerableTimer > 0 && Math.floor(game.time * 24) % 2 === 0;
+    ctx.globalAlpha = invulnFlash ? 0.55 : 1;
+
+    // Shadow.
+    ctx.fillStyle = 'rgba(0,0,0,0.32)';
+    ctx.beginPath();
+    ctx.ellipse(0, 18, 24, 11, 0, 0, TAU);
+    ctx.fill();
+
+    ctx.rotate(this.facing);
+
+    // Dash trail aura and blocking shield.
+    if (this.dashTimer > 0) {
+      ctx.strokeStyle = '#70e8ff';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(-34, -14);
+      ctx.lineTo(-58, 0);
+      ctx.lineTo(-34, 14);
+      ctx.stroke();
+    }
+    if (this.blocking) {
+      const parryAlpha = clamp(1 - (game.time - this.blockStartTime) / PLAYER_BASE.parryWindow, 0, 1);
+      ctx.strokeStyle = `rgba(183,251,255,${0.55 + parryAlpha * 0.4})`;
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(22, 0, 34, -1.15, 1.15);
+      ctx.stroke();
+      if (parryAlpha > 0) {
+        ctx.strokeStyle = '#fff2a8';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+    }
+
+    // Cloak/body.
+    ctx.fillStyle = '#08040d';
+    ctx.beginPath();
+    ctx.moveTo(-16, -16);
+    ctx.lineTo(21, 0);
+    ctx.lineTo(-16, 16);
+    ctx.lineTo(-7, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = cosmetics.outfitColor;
+    ctx.beginPath();
+    ctx.moveTo(-12, -14);
+    ctx.lineTo(19, 0);
+    ctx.lineTo(-12, 14);
+    ctx.lineTo(-4, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Head/hair.
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, 0, TAU);
+    ctx.fillStyle = '#d8a16f';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#08040d';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(-5, -7, 13, 8, -0.3, 0, TAU);
+    ctx.fillStyle = cosmetics.hairColor;
+    ctx.fill();
+
+    // Comic eye/facing slash.
+    ctx.strokeStyle = '#08040d';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(7, -5);
+    ctx.lineTo(14, -2);
+    ctx.stroke();
+
+    // Dual daggers.
+    const accent = cosmetics.accentColor;
+    ctx.fillStyle = '#f7f0ff';
+    ctx.strokeStyle = '#08040d';
+    ctx.lineWidth = 3;
+    for (const side of [-1, 1]) {
+      ctx.save();
+      ctx.translate(12, side * 16);
+      ctx.rotate(side * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(0, -4);
+      ctx.lineTo(28, 0);
+      ctx.lineTo(0, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = accent;
+      ctx.fillRect(-7, -6, 10, 12);
+      ctx.restore();
+    }
+
+    if (this.attack) {
+      const spec = this.attack.spec;
+      const p = attackProgress(this.attack);
+      ctx.strokeStyle = rgba(spec.id === 'special' ? '#e52c59' : '#ffecc7', 0.55 * (1 - Math.abs(0.5 - p)));
+      ctx.lineWidth = spec.id === 'special' ? 8 : 6;
+      ctx.beginPath();
+      if (spec.arc >= TAU - 0.1) {
+        ctx.arc(0, 0, spec.range * smoothstep(p), 0, TAU);
+      } else {
+        ctx.arc(0, 0, spec.range, -spec.arc / 2, spec.arc / 2);
+      }
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+}
+
+class Enemy {
+  constructor(spawn, game) {
+    const data = ENEMY_TYPES[spawn.type] || MINI_BOSSES[spawn.type];
+    if (!data) throw new Error(`Unknown enemy type ${spawn.type}`);
+    this.id = nextId('enemy');
+    this.type = spawn.type;
+    this.data = data;
+    this.name = data.name;
+    this.role = data.role;
+    this.x = spawn.x;
+    this.y = spawn.y;
+    this.homeX = spawn.x;
+    this.homeY = spawn.y;
+    this.patrolRadius = spawn.patrolRadius !== undefined ? spawn.patrolRadius : 140;
+    this.radius = data.radius;
+    this.maxHp = data.maxHp;
+    this.hp = data.maxHp;
+    this.speed = data.speed;
+    this.boss = Boolean(spawn.boss || MINI_BOSSES[spawn.type]);
+    this.dead = false;
+    this.facing = Math.random() * TAU;
+    this.aggro = this.boss;
+    this.cooldown = game.rng && game.rng.range ? game.rng.range(0.25, 1.4) : Math.random();
+    this.attack = null;
+    this.staggerTimer = 0;
+    this.knockX = 0;
+    this.knockY = 0;
+    this.bleedStacks = 0;
+    this.bleedTimer = 0;
+    this.bleedTick = 0.65;
+    this.bleedPower = 1;
+    this.burnTimer = 0;
+    this.burnTick = 0.5;
+    this.burnDamage = 0;
+    this.phase2 = false;
+    this.wanderTimer = 0;
+    this.wanderAngle = Math.random() * TAU;
+  }
+
+  isBleeding() {
+    return this.bleedStacks >= 3 && this.bleedTimer > 0;
+  }
+
+  applyBleed(stacks, power, game) {
+    if (stacks <= 0 || this.dead) return;
+    this.bleedStacks = clamp(this.bleedStacks + stacks, 0, 9);
+    this.bleedPower = Math.max(this.bleedPower, power);
+    this.bleedTimer = Math.max(this.bleedTimer, 5.8 + stacks * 0.3);
+    if (this.bleedStacks >= 3) {
+      game.spawnText('BLEED', this.x, this.y - this.radius - 28, '#ff315f', 14);
+      for (let i = 0; i < 5; i += 1) {
+        game.addParticle(
+          new Particle({
+            x: this.x + (Math.random() - 0.5) * this.radius,
+            y: this.y + (Math.random() - 0.5) * this.radius,
+            vx: (Math.random() - 0.5) * 90,
+            vy: (Math.random() - 0.5) * 90,
+            life: 0.32,
+            radius: 3 + Math.random() * 4,
+            color: '#e52c59'
+          })
+        );
+      }
+    }
+  }
+
+  applyBurn(duration, damagePerTick) {
+    this.burnTimer = Math.max(this.burnTimer, duration);
+    this.burnDamage = Math.max(this.burnDamage, damagePerTick);
+  }
+
+  takeDamage(amount, source, game, info = {}) {
+    if (this.dead) return false;
+    let damage = amount;
+    if (this.staggerTimer > 0 && !info.dot) damage *= 1.08;
+    this.hp = clamp(this.hp - damage, 0, this.maxHp);
+    this.aggro = true;
+    if (info.bleedStacks && source && source.id === 'player') {
+      this.applyBleed(info.bleedStacks, info.bleedPower !== undefined ? info.bleedPower : 1, game);
+    }
+    if (info.knockback && !this.boss) {
+      this.knockX += Math.cos(info.angle) * info.knockback;
+      this.knockY += Math.sin(info.angle) * info.knockback;
+    }
+    if (info.stagger) this.staggerTimer = Math.max(this.staggerTimer, info.stagger);
+    const color = info.dot ? '#ff8fab' : info.crit ? '#ffd166' : '#ffecc7';
+    game.spawnText(`${info.crit ? 'CRIT ' : ''}${Math.round(damage)}`, this.x, this.y - this.radius - 24, color, info.crit ? 18 : 14);
+    game.spawnImpact(this.x, this.y, info.dot ? '#e52c59' : '#ffecc7', info.crit ? 13 : 8);
+    if (!info.dot) {
+      game.audio.play('hit', info.crit ? 1.15 : 0.85);
+      game.hitStop = Math.max(game.hitStop, info.attackId === 'counter' ? 0.08 : info.attackId === 'finisher' ? 0.045 : 0.018);
+      game.screenShake = Math.max(game.screenShake, info.attackId === 'counter' ? 10 : info.crit ? 7 : 3);
+    }
+    game.lastTarget = this;
+    game.lastTargetTime = game.time;
+    if (this.hp <= 0) this.die(game, source);
+    return true;
+  }
+
+  die(game, source) {
+    if (this.dead) return;
+    this.dead = true;
+    this.attack = null;
+    game.audio.play(this.boss ? 'death' : 'enemy', this.boss ? 1.1 : 0.7);
+    if (!this.training) {
+      game.save.data.player.stats.enemiesDefeated += 1;
+      if (this.boss) game.save.data.player.stats.miniBossesDefeated += 1;
+    }
+    for (let i = 0; i < (this.boss ? 28 : 12); i += 1) {
+      const a = Math.random() * TAU;
+      const s = 60 + Math.random() * (this.boss ? 210 : 120);
+      game.addParticle(
+        new Particle({
+          x: this.x + Math.cos(a) * this.radius * 0.4,
+          y: this.y + Math.sin(a) * this.radius * 0.4,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s,
+          life: 0.42 + Math.random() * 0.35,
+          radius: 3 + Math.random() * (this.boss ? 7 : 4),
+          color: this.boss ? '#ffd166' : '#e52c59'
+        })
+      );
+    }
+    game.onEnemyDefeated(this);
+  }
+
+  update(dt, game) {
+    if (this.dead) return;
+    this.updateStatuses(dt, game);
+    if (this.dead) return;
+    this.cooldown = Math.max(0, this.cooldown - dt);
+    this.staggerTimer = Math.max(0, this.staggerTimer - dt);
+    if (this.knockX || this.knockY) {
+      this.x += this.knockX * dt;
+      this.y += this.knockY * dt;
+      this.knockX *= Math.pow(0.04, dt);
+      this.knockY *= Math.pow(0.04, dt);
+      if (Math.hypot(this.knockX, this.knockY) < 3) {
+        this.knockX = 0;
+        this.knockY = 0;
+      }
+      if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
+    }
+    if (this.staggerTimer > 0) return;
+
+    if (this.boss && this.data.phase2 && !this.phase2 && this.hp / this.maxHp <= this.data.phase2.threshold) {
+      this.phase2 = true;
+      game.notify(`${this.name} enters a new phase!`, 'danger');
+      game.spawnShockwave(this.x, this.y, this.radius + 70, '#ff315f');
+      game.screenShake = Math.max(game.screenShake, 12);
+    }
+
+    if (this.attack) {
+      this.updateAttack(dt, game);
+      if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
+      return;
+    }
+
+    const player = game.player;
+    const dx = player.x - this.x;
+    const dy = player.y - this.y;
+    const dist = Math.hypot(dx, dy);
+    const aggroRange = this.data.aggroRange !== undefined ? this.data.aggroRange : 420;
+    if (!this.aggro && dist < aggroRange) this.aggro = true;
+
+    if (!this.aggro) {
+      this.updateWander(dt, game);
+      return;
+    }
+
+    const attack = this.chooseAttack(dist, game);
+    if (attack && this.cooldown <= 0) {
+      this.startAttack(attack, game);
+      return;
+    }
+
+    this.moveCombat(dt, game, dist);
+    if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
+  }
+
+  updateStatuses(dt, game) {
+    if (this.bleedTimer > 0) {
+      this.bleedTimer -= dt;
+      this.bleedTick -= dt;
+      if (this.bleedTimer <= 0) {
+        this.bleedStacks = 0;
+        this.bleedPower = 1;
+      } else if (this.isBleeding() && this.bleedTick <= 0) {
+        this.bleedTick = 0.68;
+        const damage = (1.4 + this.bleedStacks * 1.25) * this.bleedPower;
+        this.takeDamage(damage, null, game, { dot: true });
+      }
+    }
+    if (this.burnTimer > 0) {
+      this.burnTimer -= dt;
+      this.burnTick -= dt;
+      if (this.burnTick <= 0) {
+        this.burnTick = 0.5;
+        this.takeDamage(this.burnDamage, null, game, { dot: true });
+        game.addParticle(new Particle({ x: this.x, y: this.y - this.radius * 0.2, vx: 0, vy: -30, life: 0.3, radius: 5, color: '#ff8f3f' }));
+      }
+    }
+  }
+
+  updateWander(dt, game) {
+    this.wanderTimer -= dt;
+    if (this.wanderTimer <= 0) {
+      this.wanderTimer = 1.2 + Math.random() * 2;
+      this.wanderAngle = Math.random() * TAU;
+    }
+    const homeDist = Math.hypot(this.x - this.homeX, this.y - this.homeY);
+    let angle = this.wanderAngle;
+    if (homeDist > this.patrolRadius) angle = Math.atan2(this.homeY - this.y, this.homeX - this.x);
+    this.x += Math.cos(angle) * this.speed * 0.22 * dt;
+    this.y += Math.sin(angle) * this.speed * 0.22 * dt;
+    this.facing = angle;
+    if (game.world && game.world.resolveCollision) game.world.resolveCollision(this);
+  }
+
+  chooseAttack(dist, game) {
+    const attacks = this.data.attacks;
+    if (!attacks || !attacks.length) return null;
+    const usable = attacks.filter((attack) => dist <= attack.range + (attack.kind === 'melee' || attack.kind === 'triple_melee' ? this.radius + game.player.radius : 0));
+    if (!usable.length) return null;
+    if (this.boss) {
+      // Bosses rotate through patterns based on range but remain readable.
+      return game.rng.pick(usable);
+    }
+    return usable[0];
+  }
+
+  moveCombat(dt, game, dist) {
+    const player = game.player;
+    const a = Math.atan2(player.y - this.y, player.x - this.x);
+    this.facing = a;
+    const preferred = this.data.preferredRange;
+    let dir = 1;
+    let speedScale = 1;
+    if (preferred) {
+      if (dist < preferred * 0.72) dir = -1;
+      else if (dist < preferred * 1.08) {
+        dir = 0;
+        // Strafe so ranged enemies are not identical to melee enemies.
+        this.x += Math.cos(a + Math.PI / 2) * this.speed * 0.42 * Math.sin(game.time * 2 + this.radius) * dt;
+        this.y += Math.sin(a + Math.PI / 2) * this.speed * 0.42 * Math.sin(game.time * 2 + this.radius) * dt;
+      }
+    } else if (dist < this.radius + player.radius + 26) {
+      dir = -0.25;
+      speedScale = 0.55;
+    }
+    const phaseSpeed = this.phase2 && this.data.phase2 ? this.data.phase2.speedMultiplier : 1;
+    this.x += Math.cos(a) * this.speed * speedScale * phaseSpeed * dir * dt;
+    this.y += Math.sin(a) * this.speed * speedScale * phaseSpeed * dir * dt;
+  }
+
+  startAttack(def, game) {
+    this.facing = angleTo(this, game.player);
+    this.attack = {
+      def,
+      elapsed: 0,
+      hit: false,
+      fire: false,
+      targetX: game.player.x,
+      targetY: game.player.y,
+      chargeStarted: false,
+      comboIndex: 0,
+      hitIndexes: new Set(),
+      angle: this.facing
+    };
+    this.cooldown = def.recovery + (this.boss ? 0.18 : 0.36) + Math.random() * (this.boss ? 0.36 : 0.72);
+  }
+
+  updateAttack(dt, game) {
+    const attack = this.attack;
+    const def = attack.def;
+    attack.elapsed += dt;
+    const player = game.player;
+    if (attack.elapsed < def.windup * 0.65 && def.kind !== 'aoe') {
+      this.facing = angleTo(this, player);
+      attack.angle = this.facing;
+      attack.targetX = player.x;
+      attack.targetY = player.y;
+    }
+
+    if (def.kind === 'melee') {
+      if (attack.elapsed >= def.windup && attack.elapsed <= def.windup + def.active) {
+        if (def.dash && !attack.dashDone) {
+          attack.dashDone = true;
+          this.x += Math.cos(this.facing) * def.dash * 0.28;
+          this.y += Math.sin(this.facing) * def.dash * 0.28;
+        }
+        if (!attack.hit) {
+          attack.hit = true;
+          this.tryMeleeHit(game, def);
+        }
+      }
+    } else if (def.kind === 'triple_melee') {
+      const hitTimes = [def.windup, def.windup + 0.28, def.windup + 0.56];
+      for (let i = 0; i < hitTimes.length; i += 1) {
+        if (!attack.hitIndexes.has(i) && attack.elapsed >= hitTimes[i]) {
+          attack.hitIndexes.add(i);
+          this.facing = angleTo(this, player);
+          const dashDistance = def.dash !== undefined ? def.dash : 60;
+          this.x += Math.cos(this.facing) * dashDistance * 0.17;
+          this.y += Math.sin(this.facing) * dashDistance * 0.17;
+          this.tryMeleeHit(game, def, 0.75 + i * 0.12);
+          game.spawnSlash(this.x, this.y, this.facing, { ...def, range: def.range, arc: def.arc, id: 'enemy_slash' }, def.indicatorColor);
+        }
+      }
+    } else if (def.kind === 'projectile') {
+      if (!attack.fire && attack.elapsed >= def.windup) {
+        attack.fire = true;
+        const a = Math.atan2(attack.targetY - this.y, attack.targetX - this.x);
+        const speed = def.projectileSpeed;
+        game.projectiles.push(
+          new Projectile({
+            x: this.x + Math.cos(a) * (this.radius + 12),
+            y: this.y + Math.sin(a) * (this.radius + 12),
+            vx: Math.cos(a) * speed,
+            vy: Math.sin(a) * speed,
+            damage: this.scaledDamage(def),
+            radius: def.projectileRadius,
+            owner: this,
+            color: def.indicatorColor,
+            label: def.label
+          })
+        );
+        game.audio.play('enemy', 0.55);
+      }
+    } else if (def.kind === 'aoe') {
+      if (!attack.fire && attack.elapsed >= def.windup) {
+        attack.fire = true;
+        game.spawnShockwave(attack.targetX, attack.targetY, def.areaRadius, def.indicatorColor);
+        const dist = Math.hypot(player.x - attack.targetX, player.y - attack.targetY);
+        if (dist <= def.areaRadius + player.radius) {
+          player.takeDamage(this.scaledDamage(def), this, game, {
+            kind: 'aoe',
+            label: def.label,
+            knockback: def.knockback !== undefined ? def.knockback : 90
+          });
+        }
+      }
+    } else if (def.kind === 'charge') {
+      if (attack.elapsed >= def.windup && attack.elapsed <= def.windup + def.active) {
+        if (!attack.chargeStarted) {
+          attack.chargeStarted = true;
+          attack.angle = Math.atan2(attack.targetY - this.y, attack.targetX - this.x);
+          game.spawnShockwave(this.x, this.y, this.radius + 25, def.indicatorColor);
+        }
+        this.x += Math.cos(attack.angle) * def.chargeSpeed * dt;
+        this.y += Math.sin(attack.angle) * def.chargeSpeed * dt;
+        this.facing = attack.angle;
+        if (!attack.hit && Math.hypot(player.x - this.x, player.y - this.y) <= player.radius + this.radius + 8) {
+          attack.hit = true;
+          player.takeDamage(this.scaledDamage(def), this, game, { kind: 'charge', label: def.label, knockback: def.knockback });
+        }
+      }
+    } else if (def.kind === 'summon') {
+      if (!attack.fire && attack.elapsed >= def.windup) {
+        attack.fire = true;
+        const current = game.enemies.filter((e) => !e.dead).length;
+        if (current < 22) {
+          for (let i = 0; i < def.summonCount; i += 1) {
+            const a = (i / def.summonCount) * TAU + Math.random() * 0.5;
+            game.spawnEnemy(def.summon, this.x + Math.cos(a) * 85, this.y + Math.sin(a) * 85, { aggro: true });
+          }
+          game.notify(`${this.name} calls reinforcements!`, 'danger');
+        }
+      }
+    }
+
+    const total = def.windup + def.active + def.recovery + (def.kind === 'triple_melee' ? 0.48 : 0);
+    if (attack.elapsed >= total) this.attack = null;
+  }
+
+  scaledDamage(def) {
+    const phase = this.phase2 && this.data.phase2 ? this.data.phase2.damageMultiplier : 1;
+    return def.damage * phase;
+  }
+
+  tryMeleeHit(game, def, mult = 1) {
+    const player = game.player;
+    const dx = player.x - this.x;
+    const dy = player.y - this.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > def.range + player.radius) return false;
+    const dir = Math.atan2(dy, dx);
+    const arc = def.arc !== undefined ? def.arc : 1.2;
+    if (Math.abs(angleDiff(dir, this.facing)) > arc / 2) return false;
+    player.takeDamage(this.scaledDamage(def) * mult, this, game, { kind: 'melee', label: def.label, knockback: def.knockback });
+    return true;
+  }
+
+  drawTelegraph(ctx, game) {
+    if (!this.attack || this.dead) return;
+    const { def, elapsed, targetX, targetY, angle } = this.attack;
+    if (elapsed > def.windup + def.active) return;
+    const wind = clamp(elapsed / def.windup, 0, 1);
+    const alpha = 0.18 + wind * 0.32;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = def.indicatorColor;
+    ctx.fillStyle = rgba(def.indicatorColor, 0.18 + wind * 0.18);
+    ctx.lineWidth = 4 + wind * 4;
+
+    if (def.kind === 'aoe') {
+      ctx.beginPath();
+      ctx.arc(targetX, targetY, def.areaRadius, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(targetX, targetY, def.areaRadius * wind, 0, TAU);
+      ctx.stroke();
+    } else if (def.kind === 'projectile') {
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(targetX, targetY);
+      ctx.stroke();
+    } else if (def.kind === 'charge') {
+      ctx.translate(this.x, this.y);
+      ctx.rotate(angle);
+      drawRoundedRect(ctx, 0, -this.radius * 0.65, def.range, this.radius * 1.3, 18);
+      ctx.fill();
+      ctx.stroke();
+    } else if (def.kind === 'summon') {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius + 48 * wind, 0, TAU);
+      ctx.stroke();
+    } else {
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.facing);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      const arc = def.arc !== undefined ? def.arc : 1.2;
+      ctx.arc(0, 0, def.range, -arc / 2, arc / 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  draw(ctx, game) {
+    if (this.dead) return;
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    const hurt = game.lastTarget === this && game.time - game.lastTargetTime < 0.08;
+    if (hurt) ctx.globalAlpha = 0.72;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(0, this.radius * 0.75, this.radius * 1.12, this.radius * 0.45, 0, 0, TAU);
+    ctx.fill();
+    ctx.rotate(this.facing);
+    const scale = this.boss ? 1.08 : 1;
+    ctx.scale(scale, scale);
+
+    if (this.type.includes('wolf')) this.drawWolf(ctx);
+    else if (this.type.includes('archer')) this.drawGoblin(ctx, true);
+    else if (this.type.includes('goblin')) this.drawGoblin(ctx, false);
+    else if (this.type.includes('mage')) this.drawMage(ctx);
+    else if (this.type.includes('brute')) this.drawBrute(ctx);
+    else if (this.type.includes('treant')) this.drawTreant(ctx);
+    else this.drawWolf(ctx);
+
+    if (this.staggerTimer > 0) {
+      drawOutlinedText(ctx, '✦', 0, -this.radius - 20, { size: 18, color: '#ffd166' });
+    }
+    ctx.restore();
+
+    this.drawHealth(ctx);
+  }
+
+  drawHealth(ctx) {
+    if (this.hp >= this.maxHp && !this.boss && !this.isBleeding()) return;
+    const w = this.boss ? 92 : 48;
+    const h = this.boss ? 8 : 6;
+    const x = this.x - w / 2;
+    const y = this.y - this.radius - (this.boss ? 34 : 22);
+    ctx.save();
+    ctx.fillStyle = '#09050e';
+    drawRoundedRect(ctx, x, y, w, h, 6);
+    ctx.fill();
+    ctx.fillStyle = this.boss ? '#ffd166' : '#ff6b35';
+    drawRoundedRect(ctx, x, y, w * (this.hp / this.maxHp), h, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#09050e';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    if (this.bleedStacks > 0) {
+      for (let i = 0; i < Math.min(9, this.bleedStacks); i += 1) {
+        ctx.beginPath();
+        ctx.arc(x + 6 + i * 8, y + h + 8, 3, 0, TAU);
+        ctx.fillStyle = this.isBleeding() ? '#ff315f' : '#8d1236';
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  drawWolf(ctx) {
+    ctx.fillStyle = this.data.body;
+    ctx.strokeStyle = '#08040d';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.radius * 1.1, this.radius * 0.75, 0, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(this.radius * 0.82, 0, this.radius * 0.62, this.radius * 0.55, 0, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = this.data.accent;
+    ctx.beginPath();
+    ctx.moveTo(this.radius * 1.15, -this.radius * 0.35);
+    ctx.lineTo(this.radius * 1.45, -this.radius * 0.95);
+    ctx.lineTo(this.radius * 0.72, -this.radius * 0.52);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(this.radius * 1.15, this.radius * 0.35);
+    ctx.lineTo(this.radius * 1.45, this.radius * 0.95);
+    ctx.lineTo(this.radius * 0.72, this.radius * 0.52);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = this.data.accent;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-this.radius * 0.9, 0);
+    ctx.quadraticCurveTo(-this.radius * 1.55, -this.radius * 0.62, -this.radius * 1.75, -this.radius * 0.15);
+    ctx.stroke();
+  }
+
+  drawGoblin(ctx, archer) {
+    ctx.strokeStyle = '#08040d';
+    ctx.lineWidth = 4;
+    ctx.fillStyle = this.data.body;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.radius * 0.85, this.radius, 0, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#97d37d';
+    ctx.beginPath();
+    ctx.arc(this.radius * 0.55, 0, this.radius * 0.62, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = this.data.accent;
+    ctx.fillRect(-this.radius * 0.5, -this.radius * 0.65, this.radius * 0.7, this.radius * 1.3);
+    ctx.strokeRect(-this.radius * 0.5, -this.radius * 0.65, this.radius * 0.7, this.radius * 1.3);
+    if (archer) {
+      ctx.strokeStyle = '#f2c15f';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(this.radius * 0.95, 0, 18, -1.3, 1.3);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#f7f0ff';
+      ctx.beginPath();
+      ctx.moveTo(this.radius * 0.75, -5);
+      ctx.lineTo(this.radius * 1.75, 0);
+      ctx.lineTo(this.radius * 0.75, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  drawMage(ctx) {
+    ctx.strokeStyle = '#08040d';
+    ctx.lineWidth = 4;
+    ctx.fillStyle = this.data.body;
+    ctx.beginPath();
+    ctx.moveTo(-this.radius, this.radius);
+    ctx.lineTo(0, -this.radius * 1.25);
+    ctx.lineTo(this.radius, this.radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = this.data.accent;
+    ctx.beginPath();
+    ctx.arc(this.radius * 0.2, -this.radius * 0.35, 8, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = this.data.accent;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(this.radius * 0.75, -this.radius * 0.7);
+    ctx.lineTo(this.radius * 1.25, this.radius * 0.8);
+    ctx.stroke();
+  }
+
+  drawBrute(ctx) {
+    ctx.strokeStyle = '#08040d';
+    ctx.lineWidth = 5;
+    ctx.fillStyle = this.data.body;
+    drawRoundedRect(ctx, -this.radius * 0.9, -this.radius * 0.82, this.radius * 1.55, this.radius * 1.64, 14);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = this.data.accent;
+    ctx.beginPath();
+    ctx.arc(this.radius * 0.55, 0, this.radius * 0.58, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#e1c38a';
+    drawRoundedRect(ctx, -this.radius * 0.55, -this.radius * 0.45, this.radius * 0.75, this.radius * 0.9, 8);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  drawTreant(ctx) {
+    ctx.strokeStyle = '#08040d';
+    ctx.lineWidth = 5;
+    ctx.fillStyle = this.data.body;
+    drawRoundedRect(ctx, -this.radius * 0.72, -this.radius, this.radius * 1.35, this.radius * 2, 18);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = this.data.accent;
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.moveTo(-this.radius * 0.2, -this.radius * 0.4);
+    ctx.quadraticCurveTo(-this.radius * 0.7, -this.radius * 1.1, -this.radius * 1.25, -this.radius * 1.24);
+    ctx.moveTo(this.radius * 0.1, -this.radius * 0.35);
+    ctx.quadraticCurveTo(this.radius * 0.9, -this.radius * 1.0, this.radius * 1.35, -this.radius * 1.08);
+    ctx.stroke();
+  }
+}
+
+// End src/entities/entities.js
+
+// Begin src/ui/ui.js
+class UIManager {
+  constructor(game) {
+    this.game = game;
+    this.modalOpen = false;
+    this.elements = {
+      mode: document.getElementById('mode-label'),
+      hpBar: document.getElementById('health-bar'),
+      hpText: document.getElementById('health-text'),
+      xpBar: document.getElementById('xp-bar'),
+      xpText: document.getElementById('xp-text'),
+      currency: document.getElementById('currency-line'),
+      runLoot: document.getElementById('run-loot-line'),
+      enemyCard: document.getElementById('enemy-card'),
+      enemyName: document.getElementById('enemy-name'),
+      enemyBleed: document.getElementById('enemy-bleed-pill'),
+      enemyHp: document.getElementById('enemy-health-bar'),
+      combo: document.getElementById('combo-label'),
+      abilityRow: document.getElementById('ability-row'),
+      notifications: document.getElementById('notifications'),
+      minimap: document.getElementById('minimap'),
+      pause: document.getElementById('pause-button'),
+      modal: document.getElementById('modal-backdrop'),
+      modalTitle: document.getElementById('modal-title'),
+      modalBody: document.getElementById('modal-body'),
+      modalActions: document.getElementById('modal-actions'),
+      modalClose: document.getElementById('modal-close'),
+      specialCd: document.getElementById('special-cd'),
+      dashCd: document.getElementById('dash-cd'),
+      interactLabel: document.getElementById('interact-label'),
+      interactHint: document.getElementById('interact-hint')
+    };
+    this.buttons = {
+      special: document.querySelector('[data-action="special"]'),
+      dash: document.querySelector('[data-action="dash"]'),
+      interact: document.querySelector('[data-action="interact"]'),
+      light: document.querySelector('[data-action="light"]'),
+      heavy: document.querySelector('[data-action="heavy"]'),
+      block: document.querySelector('[data-action="block"]')
+    };
+
+    this.elements.pause.addEventListener('click', () => this.game.openPauseMenu());
+    this.elements.modalClose.addEventListener('click', () => this.closeModal());
+  }
+
+  notify(text, type = '') {
+    const node = document.createElement('div');
+    node.className = `toast ${type}`;
+    node.textContent = text;
+    this.elements.notifications.prepend(node);
+    while (this.elements.notifications.children.length > 4) {
+      this.elements.notifications.lastElementChild.remove();
+    }
+    window.setTimeout(() => {
+      node.style.opacity = '0';
+      node.style.transform = 'translateY(-6px) scale(0.94)';
+      window.setTimeout(() => node.remove(), 250);
+    }, type === 'parry' ? 1600 : 2200);
+  }
+
+  showModal(title, bodyHtml, actions = [], { lock = true } = {}) {
+    this.modalOpen = lock;
+    this.game.pausedForUi = lock;
+    this.elements.modalTitle.textContent = title;
+    this.elements.modalBody.innerHTML = bodyHtml;
+    this.elements.modalActions.innerHTML = '';
+    for (const action of actions) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `modal-button ${action.className || ''}`.trim();
+      button.innerHTML = action.html !== undefined ? action.html : action.label;
+      button.disabled = Boolean(action.disabled);
+      button.addEventListener('click', () => {
+        this.game.audio.play('ui');
+        if (action.onClick) action.onClick();
+      });
+      this.elements.modalActions.append(button);
+    }
+    this.elements.modal.classList.remove('hidden');
+  }
+
+  closeModal() {
+    this.elements.modal.classList.add('hidden');
+    this.modalOpen = false;
+    this.game.pausedForUi = false;
+  }
+
+  update() {
+    const game = this.game;
+    const player = game.player;
+    const save = game.save.data;
+    this.elements.mode.textContent = game.mode === 'hunt' ? `Forest Hunt · ${game.run ? game.run.seedLabel : ''}` : 'Base';
+
+    const hpPct = clamp(player.health / player.maxHealth, 0, 1);
+    this.elements.hpBar.style.width = `${hpPct * 100}%`;
+    this.elements.hpText.textContent = `HP ${Math.ceil(player.health)} / ${player.maxHealth}`;
+
+    const next = xpToNextLevel(save.player.level);
+    const xpPct = clamp(save.player.xp / next, 0, 1);
+    this.elements.xpBar.style.width = `${xpPct * 100}%`;
+    this.elements.xpText.textContent = `LV ${save.player.level} · XP ${save.player.xp}/${next}`;
+
+    const weapon = WEAPONS[save.equipment.equippedWeapon];
+    const equippedRecord = save.equipment.weapons[weapon.id];
+    this.elements.currency.textContent = `Coins ${save.wallet.coins} · ${weapon.name} +${equippedRecord ? equippedRecord.level : 1}`;
+
+    if (game.mode === 'hunt') {
+      const run = game.run;
+      this.elements.runLoot.textContent = `Run loot: ${run.tempCoins} coins · ${formatResources(run.tempResources, RESOURCE_NAMES)} · XP ${run.tempXp}`;
+    } else {
+      this.elements.runLoot.textContent = `Safe resources: ${formatResources(save.wallet.resources, RESOURCE_NAMES)}`;
+    }
+
+    const target = game.getFocusedEnemy();
+    if (target) {
+      this.elements.enemyCard.classList.remove('hidden');
+      this.elements.enemyName.textContent = target.name;
+      this.elements.enemyBleed.textContent = target.isBleeding() ? `BLEED ×${target.bleedStacks}` : `Bleed ${target.bleedStacks}`;
+      this.elements.enemyHp.style.width = `${clamp(target.hp / target.maxHp, 0, 1) * 100}%`;
+    } else {
+      this.elements.enemyCard.classList.add('hidden');
+    }
+
+    this.updateComboStrip();
+    this.updateAbilityRow();
+    this.updateButtons();
+    this.drawMinimap();
+  }
+
+  updateComboStrip() {
+    const player = this.game.player;
+    const expired = this.game.time > player.comboExpire;
+    const step = expired ? 0 : player.comboStep;
+    const labels = ['LIGHT', 'LIGHT', 'HEAVY', 'SPECIAL'];
+    const next = labels[Math.min(step, labels.length - 1)] || 'LIGHT';
+    let detail = 'Light → Light → Heavy → Special';
+    if (step === 1) detail = '<strong>Light</strong> → HEAVY → Special';
+    if (step === 2) detail = '<strong>Heavy Finisher</strong> → Special';
+    if (step === 3) detail = '<strong>Special Combo</strong> ready';
+    if (step >= 4) detail = 'Combo complete';
+    this.elements.combo.innerHTML = `Combo next: ${next} · ${detail}`;
+  }
+
+  updateAbilityRow() {
+    const abilities = this.game.player.tempAbilities;
+    if (!abilities.length) {
+      this.elements.abilityRow.innerHTML = '';
+      return;
+    }
+    this.elements.abilityRow.innerHTML = abilities
+      .map((a) => `<span class="ability-chip" style="border-color:${a.color}; box-shadow:0 0 12px ${a.color}55">${a.shortName}</span>`)
+      .join('');
+  }
+
+  updateButtons() {
+    const player = this.game.player;
+    const stats = player.getStats();
+    const specialReady = player.specialCooldown <= 0;
+    const dashReady = player.dashCooldown <= 0;
+    this.elements.specialCd.textContent = specialReady ? 'READY' : `${player.specialCooldown.toFixed(1)}s`;
+    this.elements.dashCd.textContent = dashReady ? 'READY' : `${player.dashCooldown.toFixed(1)}s`;
+    this.buttons.special.classList.toggle('cooling', !specialReady);
+    this.buttons.dash.classList.toggle('cooling', !dashReady);
+
+    const context = this.game.contextAction;
+    if (context) {
+      this.buttons.interact.classList.remove('disabled');
+      this.elements.interactLabel.textContent = 'ACT';
+      this.elements.interactHint.textContent = context.label.toUpperCase().slice(0, 10);
+    } else {
+      this.buttons.interact.classList.add('disabled');
+      this.elements.interactLabel.textContent = 'ACT';
+      this.elements.interactHint.textContent = this.game.mode === 'base' ? 'BUILDING' : 'NEARBY';
+    }
+
+    this.buttons.block.classList.toggle('cooling', player.blocking && this.game.time - player.blockStartTime > 0.22);
+    this.buttons.heavy.classList.toggle('cooling', this.game.time <= player.comboExpire && player.comboStep === 2);
+    this.buttons.light.classList.toggle('cooling', this.game.time <= player.comboExpire && player.comboStep === 1);
+
+    this.buttons.special.title = `Crimson Spiral cooldown: ${stats.specialCooldown}s`;
+  }
+
+  drawMinimap() {
+    const canvas = this.elements.minimap;
+    const ctx = canvas.getContext('2d');
+    const game = this.game;
+    const world = game.world;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(8,4,13,0.84)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (!world) return;
+    const pad = 7;
+    const sx = (canvas.width - pad * 2) / world.width;
+    const sy = (canvas.height - pad * 2) / world.height;
+    const map = (x, y) => ({ x: pad + x * sx, y: pad + y * sy });
+
+    ctx.save();
+    if (world.kind === 'hunt') {
+      ctx.strokeStyle = 'rgba(255,236,199,0.18)';
+      ctx.lineWidth = 2;
+      for (const c of world.corridors) {
+        if (c.secret && !c.b.discovered) continue;
+        const a = map(c.a.x, c.a.y);
+        const b = map(c.b.x, c.b.y);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      for (const room of world.rooms) {
+        if (room.secret && !room.discovered) continue;
+        const p = map(room.x, room.y);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, room.type === 'boss_grove' ? 6 : 4, 0, Math.PI * 2);
+        ctx.fillStyle = room.type === 'boss_grove' ? '#ff315f' : room.secret ? '#ffd166' : '#61753d';
+        ctx.fill();
+      }
+      for (const chest of world.chests) {
+        if (!chest.discovered || chest.opened) continue;
+        const p = map(chest.x, chest.y);
+        ctx.fillStyle = chest.dangerous ? '#ff315f' : '#ffd166';
+        ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+      }
+      for (const shrine of world.shrines) {
+        if (shrine.used) continue;
+        const p = map(shrine.x, shrine.y);
+        ctx.fillStyle = '#b68cff';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      for (const exit of world.exits) {
+        if (!exit.discovered) continue;
+        const p = map(exit.x, exit.y);
+        ctx.strokeStyle = exit.unlocked ? '#70e8ff' : '#555';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      for (const enemy of game.enemies) {
+        if (enemy.dead || (!enemy.aggro && !enemy.boss)) continue;
+        const p = map(enemy.x, enemy.y);
+        ctx.fillStyle = enemy.boss ? '#ff315f' : '#ff9b54';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, enemy.boss ? 4 : 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      for (const building of world.buildings) {
+        const p = map(building.x + building.w / 2, building.y + building.h / 2);
+        ctx.fillStyle = building.id === 'world_map' ? '#70e8ff' : '#ffd166';
+        ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+      }
+    }
+    const p = map(game.player.x, game.player.y);
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#e52c59';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  weaponCard(weaponId, record, equipped) {
+    const weapon = WEAPONS[weaponId];
+    if (!weapon) return '';
+    const rarity = RARITY[weapon.rarity];
+    return `<div class="weapon-card ${equipped ? 'equipped' : ''}">
+      <strong style="color:${rarity.color}">${weapon.name} +${record.level}</strong> ${equipped ? '<span class="pill">Equipped</span>' : ''}<br />
+      <span class="pill">${rarity.label}</span><span class="pill">Damage ${weapon.baseDamage}</span><span class="pill">Bleed ×${weapon.bleedPower}</span><span class="pill">Crit ${Math.round(weapon.critChance * 100)}%</span><br />
+      <small>${weapon.identity}</small>
+    </div>`;
+  }
+}
+
+// End src/ui/ui.js
+
+// Begin src/game.js
+const RESOURCE_COLORS = {
+  fur: '#caa77a',
+  meat: '#ff8fab',
+  claws: '#f7f0ff',
+  iron: '#9ba3b2',
+  hide: '#a87948',
+  weapon_fragments: '#70e8ff',
+  arcane_dust: '#b68cff',
+  blood_shards: '#e52c59',
+  ancient_vine: '#9bff70',
+  ember_core: '#ff8f3f',
+  frost_crystal: '#b7fbff',
+  shadow_silk: '#8d7dff'
+};
+
+class Game {
+  constructor() {
+    this.canvas = document.getElementById('game-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.save = new SaveSystem();
+    this.audio = new AudioManager();
+    this.input = new InputManager({ onFirstInput: () => this.audio.unlock() });
+    this.player = new Player(this.save.data);
+    this.ui = new UIManager(this);
+
+    this.mode = 'boot';
+    this.world = null;
+    this.enemies = [];
+    this.projectiles = [];
+    this.pickups = [];
+    this.particles = [];
+    this.floaters = [];
+    this.effects = [];
+    this.run = null;
+    this.rng = new RNG(Date.now());
+    this.camera = { x: 0, y: 0 };
+    this.viewport = { w: 1, h: 1, dpr: 1 };
+    this.time = 0;
+    this.lastFrame = performance.now();
+    this.hitStop = 0;
+    this.timeSlow = 0;
+    this.screenShake = 0;
+    this.flashOverlay = { color: '#ffffff', alpha: 0, life: 0, maxLife: 0 };
+    this.pausedForUi = false;
+    this.contextAction = null;
+    this.lastTarget = null;
+    this.lastTargetTime = -99;
+    this.playerDying = false;
+
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+    window.addEventListener('orientationchange', () => window.setTimeout(() => this.resize(), 150));
+
+    this.enterBase({ first: true });
+    requestAnimationFrame((now) => this.loop(now));
+
+    if (!this.save.data.base.storyFlags.introSeen) {
+      window.setTimeout(() => this.showIntro(), 500);
+    } else {
+      this.notify('Welcome back, Blood Hunter.', 'good');
+    }
+  }
+
+  resize() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const rect = this.canvas.getBoundingClientRect();
+    this.viewport.w = Math.max(320, rect.width || window.innerWidth);
+    this.viewport.h = Math.max(240, rect.height || window.innerHeight);
+    this.viewport.dpr = dpr;
+    this.canvas.width = Math.floor(this.viewport.w * dpr);
+    this.canvas.height = Math.floor(this.viewport.h * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  loop(now) {
+    let rawDt = Math.min(0.04, (now - this.lastFrame) / 1000 || 0.016);
+    this.lastFrame = now;
+    this.ctx.setTransform(this.viewport.dpr, 0, 0, this.viewport.dpr, 0, 0);
+
+    if (this.pausedForUi) {
+      this.render(rawDt);
+      this.ui.update();
+      this.input.endFrame();
+      requestAnimationFrame((next) => this.loop(next));
+      return;
+    }
+
+    if (this.hitStop > 0) {
+      this.hitStop = Math.max(0, this.hitStop - rawDt);
+      rawDt = 0;
+    }
+    const dt = rawDt * (this.timeSlow > 0 ? 0.42 : 1);
+    this.time += dt;
+    this.timeSlow = Math.max(0, this.timeSlow - rawDt);
+    this.update(dt);
+    this.render(rawDt);
+    this.ui.update();
+    this.input.endFrame();
+    requestAnimationFrame((next) => this.loop(next));
+  }
+
+  update(dt) {
+    if (this.input.consume('pause')) this.openPauseMenu();
+
+    this.contextAction = this.computeContextAction();
+    if (this.input.consume('interact')) this.performContextAction();
+
+    if (this.world && this.world.kind === 'hunt') this.world.markDiscovered(this.player, this);
+
+    this.player.update(dt, this);
+
+    if (this.mode === 'base') this.ensureTrainingShade();
+
+    for (const enemy of this.enemies) enemy.update(dt, this);
+    this.enemies = this.enemies.filter((enemy) => !enemy.dead || enemy.trainingRespawnTimer !== undefined);
+
+    this.projectiles = this.projectiles.filter((projectile) => projectile.update(dt, this));
+    this.pickups = this.pickups.filter((pickup) => pickup.update(dt, this));
+    this.particles = this.particles.filter((particle) => particle.update(dt));
+    this.floaters = this.floaters.filter((floater) => floater.update(dt));
+    this.effects = this.effects.filter((effect) => {
+      effect.life -= dt;
+      return effect.life > 0;
+    });
+
+    if (this.flashOverlay.life > 0) {
+      this.flashOverlay.life -= dt;
+      this.flashOverlay.alpha = clamp(this.flashOverlay.life / this.flashOverlay.maxLife, 0, 1);
+    } else {
+      this.flashOverlay.alpha = 0;
+    }
+    this.screenShake = Math.max(0, this.screenShake - dt * 38);
+    this.contextAction = this.computeContextAction();
+  }
+
+  enterBase({ first = false, nearPortal = false } = {}) {
+    this.mode = 'base';
+    this.world = new BaseWorld();
+    this.enemies = [];
+    this.projectiles = [];
+    this.pickups = [];
+    this.effects = [];
+    this.run = null;
+    this.rng = new RNG(Date.now());
+    this.player.syncFromSave(this.save.data, false);
+    this.player.resetForBase();
+    const start = this.world.getStartPosition();
+    this.player.x = nearPortal ? 1210 : start.x;
+    this.player.y = nearPortal ? 640 : start.y;
+    this.ensureTrainingShade();
+    this.contextAction = null;
+    if (!first) this.save.save();
+  }
+
+  ensureTrainingShade() {
+    const active = this.enemies.some((enemy) => enemy.training && !enemy.dead);
+    if (active) return;
+    const shade = this.spawnEnemy('goblin', 830, 970, { training: true, aggro: false });
+    shade.name = 'Training Shade';
+    shade.maxHp = 260;
+    shade.hp = shade.maxHp;
+    shade.radius = 22;
+    shade.speed = 46;
+    shade.data = {
+      ...ENEMY_TYPES.goblin,
+      name: 'Training Shade',
+      maxHp: 260,
+      speed: 46,
+      xp: 0,
+      coinDrop: [0, 0],
+      drops: [],
+      aggroRange: 230,
+      attacks: [
+        {
+          id: 'practice_swing',
+          label: 'Practice Swing',
+          kind: 'melee',
+          range: 65,
+          windup: 0.95,
+          active: 0.2,
+          recovery: 1.25,
+          damage: 1,
+          arc: 1.4,
+          dash: 18,
+          knockback: 25,
+          indicatorColor: '#70e8ff'
+        }
+      ]
+    };
+  }
+
+  startHunt(regionId = 'forest_frontier') {
+    const region = REGION_CATALOG.find((r) => r.id === regionId);
+    if (!region || region.status !== 'playable') {
+      this.notify('That region is not ready in this MVP yet.', 'danger');
+      return;
+    }
+    const seed = Date.now() ^ Math.floor(Math.random() * 999999);
+    this.rng = new RNG(seed);
+    this.mode = 'hunt';
+    this.world = new ProceduralForest(seed);
+    const start = this.world.getStartPosition();
+    this.player.syncFromSave(this.save.data, false);
+    this.player.resetForHunt();
+    this.player.x = start.x;
+    this.player.y = start.y;
+    this.enemies = [];
+    this.projectiles = [];
+    this.pickups = [];
+    this.particles = [];
+    this.floaters = [];
+    this.effects = [];
+    this.lastTarget = null;
+    this.playerDying = false;
+
+    for (const spawn of this.world.enemySpawns) this.spawnEnemy(spawn.type, spawn.x, spawn.y, spawn);
+
+    this.run = {
+      regionId,
+      seed,
+      seedLabel: `#${String(seed >>> 0).slice(-5)}`,
+      tempCoins: 0,
+      tempResources: {},
+      tempXp: 0,
+      tempWeapons: [],
+      abilities: [],
+      bossDefeated: false,
+      startTime: this.time
+    };
+    this.save.data.player.stats.huntsStarted += 1;
+    this.save.save();
+    this.ui.closeModal();
+    this.notify('Forest hunt started. Explore, fight, loot, then escape.', 'good');
+  }
+
+  spawnEnemy(type, x, y, options = {}) {
+    const enemy = new Enemy({ type, x, y, ...options }, this);
+    if (options.aggro !== undefined) enemy.aggro = options.aggro;
+    if (options.training) enemy.training = true;
+    this.enemies.push(enemy);
+    return enemy;
+  }
+
+  computeContextAction() {
+    if (!this.world) return null;
+    if (this.mode === 'base') {
+      const building = this.world.nearestBuilding(this.player);
+      return building ? { type: 'building', label: building.label, target: building } : null;
+    }
+    return this.world.nearestInteractive(this.player);
+  }
+
+  performContextAction() {
+    const action = this.contextAction;
+    if (!action) {
+      this.notify(this.mode === 'base' ? 'Move near a building to interact.' : 'No nearby object to interact with.', '');
+      return;
+    }
+    if (action.type === 'building') this.openBaseBuilding(action.target);
+    else if (action.type === 'chest') this.openChest(action.target);
+    else if (action.type === 'shrine') this.offerRunAbilities(action.target);
+    else if (action.type === 'exit') this.endHunt(true);
+  }
+
+  openBaseBuilding(building) {
+    switch (building.id) {
+      case 'world_map':
+        this.openWorldMap();
+        break;
+      case 'blacksmith':
+        this.openBlacksmith();
+        break;
+      case 'armorer':
+        this.openArmorer();
+        break;
+      case 'storage':
+        this.openStorage();
+        break;
+      case 'customization':
+        this.openCustomization();
+        break;
+      case 'skill_master':
+        this.openSkillMaster();
+        break;
+      case 'training':
+        this.openTraining();
+        break;
+      default:
+        this.notify('This base system is a placeholder for later expansion.', '');
+    }
+  }
+
+  showIntro() {
+    this.save.data.base.storyFlags.introSeen = true;
+    this.save.save();
+    this.ui.showModal(
+      'Blood Hunter Base',
+      `<p><strong>Something is corrupting the world.</strong> You are a dagger-wielding Blood Hunter: fast, aggressive, and vulnerable when you mistime blocks or dashes.</p>
+       <div class="info-card">
+         <strong>Core loop:</strong> explore the forest, fight monsters, gather temporary loot, discover secrets, defeat the mini-boss, then escape through a portal to secure rewards.
+       </div>
+       <p>Touch controls are on-screen. Desktop fallback: WASD move, J light, K heavy, L special, Shift block/parry, Space dash, E interact.</p>`,
+      [
+        { label: 'Start Forest Hunt', className: 'primary', onClick: () => this.startHunt('forest_frontier') },
+        { label: 'Explore Base First', onClick: () => this.ui.closeModal() }
+      ]
+    );
+  }
+
+  openWorldMap() {
+    const body = `<p>Select a region. Only the first fantasy forest region is fully playable in this MVP; the remaining entries are data-driven placeholders so future regions can be added cleanly.</p>
+      <div class="card-list">
+        ${REGION_CATALOG.map(
+          (region) => `<div class="info-card"><strong>${region.name}</strong> <span class="pill">${region.status}</span><br/><small>${region.description}</small></div>`
+        ).join('')}
+      </div>`;
+    const actions = REGION_CATALOG.map((region) => ({
+      label: region.status === 'playable' ? `Enter ${region.name}` : `${region.name} (Future)`,
+      className: region.status === 'playable' ? 'primary' : '',
+      disabled: region.status !== 'playable',
+      onClick: () => this.startHunt(region.id)
+    }));
+    actions.push({ label: 'Close', onClick: () => this.ui.closeModal() });
+    this.ui.showModal('World Map', body, actions);
+  }
+
+  openBlacksmith() {
+    const save = this.save.data;
+    const equipped = save.equipment.equippedWeapon;
+    const record = save.equipment.weapons[equipped] || { level: 1 };
+    const cost = weaponUpgradeCost(record.level);
+    const can = this.canPay(cost);
+    const weaponCards = Object.entries(save.equipment.weapons)
+      .filter(([, r]) => r.owned)
+      .map(([id, rec]) => this.ui.weaponCard(id, rec, id === equipped))
+      .join('');
+    const body = `<p>The blacksmith upgrades dagger power while preserving each weapon's identity.</p>
+      <div class="info-card"><strong>Upgrade ${WEAPONS[equipped].name} +${record.level}</strong><br/>Cost: ${this.costHtml(cost)}</div>
+      <h3>Owned Daggers</h3><div class="card-list">${weaponCards}</div>`;
+    const actions = [
+      {
+        label: can ? 'Upgrade Equipped Dagger' : 'Missing Materials',
+        className: can ? 'primary' : '',
+        disabled: !can,
+        onClick: () => {
+          this.upgradeWeapon(equipped);
+          this.openBlacksmith();
+        }
+      },
+      ...Object.entries(save.equipment.weapons)
+        .filter(([id, r]) => r.owned && id !== equipped)
+        .map(([id]) => ({ label: `Equip ${WEAPONS[id].name}`, onClick: () => { this.equipWeapon(id); this.openBlacksmith(); } })),
+      { label: 'Close', onClick: () => this.ui.closeModal() }
+    ];
+    this.ui.showModal('Blacksmith', body, actions);
+  }
+
+  openArmorer() {
+    const armor = this.save.data.equipment.armor;
+    const cost = armorUpgradeCost(armor.level);
+    const can = this.canPay(cost);
+    const projectedHp = this.player.getMaxHealth() + 14;
+    const body = `<p>Armor is intentionally simple in the MVP: it provides defense and health only, without changing cosmetics.</p>
+      <div class="info-card"><strong>${armor.name} +${armor.level}</strong><br/>
+      Current max health: ${this.player.maxHealth}<br/>Next max health: ${projectedHp}<br/>
+      Block/dodge/parry timing still matters even with upgraded armor.</div>
+      <div class="info-card"><strong>Upgrade cost:</strong> ${this.costHtml(cost)}</div>`;
+    this.ui.showModal('Armorer', body, [
+      {
+        label: can ? 'Upgrade Armor' : 'Missing Materials',
+        className: can ? 'primary' : '',
+        disabled: !can,
+        onClick: () => {
+          this.upgradeArmor();
+          this.openArmorer();
+        }
+      },
+      { label: 'Close', onClick: () => this.ui.closeModal() }
+    ]);
+  }
+
+  openStorage() {
+    const save = this.save.data;
+    const resources = Object.entries(save.wallet.resources)
+      .filter(([, amount]) => amount > 0)
+      .map(([id, amount]) => {
+        const name = RESOURCE_NAMES[id] !== undefined ? RESOURCE_NAMES[id] : id;
+        return `<span class="pill">${name} ×${amount}</span>`;
+      })
+      .join('') || '<span class="muted">No secured resources yet.</span>';
+    const stats = save.player.stats;
+    const body = `<div class="modal-grid">
+        <div class="info-card"><strong>Secured Loot</strong><br/>Coins: ${save.wallet.coins}<br/>${resources}</div>
+        <div class="info-card"><strong>Hunter Record</strong><br/>
+          Hunts: ${stats.huntsStarted}<br/>Escapes: ${stats.huntsEscaped}<br/>Deaths: ${stats.deaths}<br/>Perfect Parries: ${stats.perfectParries}<br/>Secrets: ${stats.secretsFound}
+        </div>
+      </div>
+      <p class="muted">Temporary run loot is only resolved when you escape or die. Secured loot is stored locally offline.</p>`;
+    this.ui.showModal('Storage', body, [
+      { label: 'Save Now', className: 'good', onClick: () => { this.save.save(); this.notify('Game saved locally.', 'good'); } },
+      { label: 'Close', onClick: () => this.ui.closeModal() }
+    ]);
+  }
+
+  openCustomization() {
+    const c = this.save.data.cosmetics;
+    const swatches = `<div class="info-card"><strong>Cosmetics do not change combat stats.</strong><br/>
+      Hair color: <span class="pill" style="background:${c.hairColor}">${c.hairColor}</span><br/>
+      Outfit color: <span class="pill" style="background:${c.outfitColor}">${c.outfitColor}</span><br/>
+      Accent color: <span class="pill" style="background:${c.accentColor}">${c.accentColor}</span></div>`;
+    this.ui.showModal('Wardrobe', swatches, [
+      { label: 'Cycle Hair Color', onClick: () => { this.cycleCosmetic('hairColor'); this.openCustomization(); } },
+      { label: 'Cycle Outfit Color', onClick: () => { this.cycleCosmetic('outfitColor'); this.openCustomization(); } },
+      { label: 'Cycle Accent Color', onClick: () => { this.cycleCosmetic('accentColor'); this.openCustomization(); } },
+      { label: 'Close', onClick: () => this.ui.closeModal() }
+    ]);
+  }
+
+  openSkillMaster() {
+    const abilityList = RUN_ABILITIES.map((a) => `<div class="info-card"><strong style="color:${a.color}">${a.name}</strong><br/><small>${a.description}</small></div>`).join('');
+    const body = `<p>The Skill Master currently documents temporary run abilities. Permanent skill-tree management is intentionally left as an expandable future system.</p>
+      <div class="info-card"><strong>Combat lesson:</strong> hold block too early for normal damage reduction, or press it inside the brief perfect-parry window as an attack lands for a riposte.</div>
+      <h3>Run Ability Pool</h3><div class="card-list">${abilityList}</div>`;
+    this.ui.showModal('Skill Master', body, [{ label: 'Close', onClick: () => this.ui.closeModal() }]);
+  }
+
+  openTraining() {
+    const body = `<p>The Training Shade attacks slowly and drops no loot. Use it to practice the core skill loop:</p>
+      <div class="info-card"><strong>Timing drill:</strong> wait for the blue attack cone to nearly finish, then tap/hold BLOCK. A perfect parry staggers the shade and triggers Blood Riposte.</div>
+      <p>Use Light → Light → Heavy → Special to practice the combo chain.</p>`;
+    this.ui.showModal('Training Yard', body, [
+      { label: 'Heal & Reset Shade', className: 'good', onClick: () => { this.player.health = this.player.maxHealth; this.enemies = []; this.ensureTrainingShade(); this.notify('Training reset.', 'good'); this.ui.closeModal(); } },
+      { label: 'Close', onClick: () => this.ui.closeModal() }
+    ]);
+  }
+
+  openPauseMenu() {
+    if (this.ui.modalOpen) {
+      this.ui.closeModal();
+      return;
+    }
+    const inHunt = this.mode === 'hunt';
+    const body = `<p><strong>Offline save:</strong> progress is stored locally on this device/browser.</p>
+      <div class="info-card">${inHunt ? 'You are in a hunt. Escaping through a portal secures all temporary loot. Abandoning now resolves loot like a defeat.' : 'You are at base. Upgrade, customize, or enter the forest from the World Map.'}</div>`;
+    const actions = [
+      { label: 'Resume', className: 'good', onClick: () => this.ui.closeModal() },
+      { label: 'Save Locally', onClick: () => { this.save.save(); this.notify('Saved.', 'good'); } }
+    ];
+    if (inHunt) actions.push({ label: 'Abandon Hunt (Lose Loot)', className: 'warn', onClick: () => this.endHunt(false) });
+    else actions.push({ label: 'Start Forest Hunt', className: 'primary', onClick: () => this.startHunt('forest_frontier') });
+    actions.push({
+      label: 'Reset Save',
+      className: 'warn',
+      onClick: () => {
+        if (window.confirm('Reset local Dager Hunter save?')) {
+          this.save.reset();
+          this.player.syncFromSave(this.save.data, false);
+          this.enterBase({ first: true });
+          this.ui.closeModal();
+          this.notify('Save reset.', 'danger');
+        }
+      }
+    });
+    this.ui.showModal('Pause', body, actions);
+  }
+
+  canPay(cost) {
+    const wallet = this.save.data.wallet;
+    for (const [id, amount] of Object.entries(cost)) {
+      if (!amount) continue;
+      const owned = id === 'coins' ? wallet.coins : wallet.resources[id] || 0;
+      if (owned < amount) return false;
+    }
+    return true;
+  }
+
+  payCost(cost) {
+    if (!this.canPay(cost)) return false;
+    const wallet = this.save.data.wallet;
+    for (const [id, amount] of Object.entries(cost)) {
+      if (!amount) continue;
+      if (id === 'coins') wallet.coins -= amount;
+      else wallet.resources[id] = (wallet.resources[id] || 0) - amount;
+    }
+    return true;
+  }
+
+  costHtml(cost) {
+    return Object.entries(cost)
+      .filter(([, amount]) => amount > 0)
+      .map(([id, amount]) => {
+        const owned = id === 'coins' ? this.save.data.wallet.coins : this.save.data.wallet.resources[id] || 0;
+        const cls = owned >= amount ? 'cost-ok' : 'cost-missing';
+        const name = RESOURCE_NAMES[id] !== undefined ? RESOURCE_NAMES[id] : id;
+        return `<span class="pill ${cls}">${name} ${owned}/${amount}</span>`;
+      })
+      .join('');
+  }
+
+  upgradeWeapon(id) {
+    const record = this.save.data.equipment.weapons[id];
+    if (!record) return;
+    const cost = weaponUpgradeCost(record.level);
+    if (!this.payCost(cost)) return;
+    record.level += 1;
+    this.player.syncFromSave(this.save.data, true);
+    this.save.save();
+    this.notify(`${WEAPONS[id].name} upgraded to +${record.level}.`, 'good');
+  }
+
+  upgradeArmor() {
+    const armor = this.save.data.equipment.armor;
+    const cost = armorUpgradeCost(armor.level);
+    if (!this.payCost(cost)) return;
+    armor.level += 1;
+    this.player.syncFromSave(this.save.data, true);
+    this.player.health = this.player.maxHealth;
+    this.save.save();
+    this.notify(`${armor.name} upgraded to +${armor.level}.`, 'good');
+  }
+
+  equipWeapon(id) {
+    if (!this.save.data.equipment.weapons[id] || !this.save.data.equipment.weapons[id].owned) return;
+    this.save.data.equipment.equippedWeapon = id;
+    this.player.syncFromSave(this.save.data, true);
+    this.save.save();
+    this.notify(`${WEAPONS[id].name} equipped.`, 'good');
+  }
+
+  cycleCosmetic(key) {
+    const options = COSMETIC_OPTIONS[key];
+    const current = this.save.data.cosmetics[key];
+    const index = options.indexOf(current);
+    this.save.data.cosmetics[key] = options[(index + 1) % options.length];
+    this.save.save();
+  }
+
+  openChest(chest) {
+    if (chest.opened) return;
+    chest.opened = true;
+    this.save.data.player.stats.chestsOpened += 1;
+    const bonus = chest.dangerous ? 1.75 : 1;
+    const coins = Math.floor(this.rng.range(10, 28) * bonus);
+    this.spawnPickup(chest.x, chest.y, { kind: 'coins', amount: coins, color: '#ffd166' });
+    const pool = chest.dangerous
+      ? ['iron', 'weapon_fragments', 'blood_shards', 'arcane_dust', 'claws']
+      : ['fur', 'meat', 'iron', 'hide', 'claws'];
+    const drops = this.rng.int(2, chest.dangerous ? 5 : 3);
+    for (let i = 0; i < drops; i += 1) {
+      const id = this.rng.pick(pool);
+      this.spawnPickup(chest.x, chest.y, {
+        kind: 'resource',
+        id,
+        amount: this.rng.int(1, chest.dangerous ? 3 : 2),
+        color: RESOURCE_COLORS[id] || '#ffecc7'
+      });
+    }
+    if (this.rng.chance(chest.dangerous ? 0.3 : 0.12)) {
+      const weaponId = this.randomWeaponDrop();
+      this.spawnPickup(chest.x, chest.y, { kind: 'weapon', weaponId, color: RARITY[WEAPONS[weaponId].rarity].color });
+    }
+    if (this.rng.chance(0.25)) this.offerRunAbilities(null, 'A rune flares inside the chest. Choose its power.');
+
+    if (chest.dangerous) {
+      this.notify('Ambush! The risk chest was guarded.', 'danger');
+      for (let i = 0; i < 2 + this.rng.int(0, 1); i += 1) {
+        const a = (i / 3) * TAU + this.rng.range(-0.4, 0.4);
+        const type = this.rng.pick(['wolf', 'goblin', 'goblin_archer', 'brute']);
+        this.spawnEnemy(type, chest.x + Math.cos(a) * 110, chest.y + Math.sin(a) * 110, { aggro: true });
+      }
+    } else {
+      this.notify('Chest opened.', 'good');
+    }
+  }
+
+  offerRunAbilities(shrine = null, introText = 'Ancient blood-runes answer your hunt. Choose one temporary ability.') {
+    if (!this.run) return;
+    if (shrine) shrine.used = true;
+    const available = RUN_ABILITIES.filter((ability) => !this.player.tempAbilities.some((owned) => owned.id === ability.id));
+    if (!available.length) {
+      this.notify('No more run abilities available in this MVP pool.', 'good');
+      return;
+    }
+    const choices = this.rng.shuffle(available).slice(0, Math.min(3, available.length));
+    const body = `<p>${introText}</p><div class="modal-grid">${choices
+      .map(
+        (ability) => `<div class="choice-card" style="border-color:${ability.color}"><strong style="color:${ability.color}">${ability.name}</strong><br/><small>${ability.description}</small></div>`
+      )
+      .join('')}</div>`;
+    const actions = choices.map((ability) => ({
+      html: `<strong style="color:${ability.color}">${ability.name}</strong><br/><small>${ability.shortName}</small>`,
+      className: 'primary',
+      onClick: () => {
+        this.player.addRunAbility(ability);
+        this.run.abilities.push(ability.id);
+        this.notify(`${ability.name} gained for this hunt.`, 'good');
+        this.ui.closeModal();
+      }
+    }));
+    this.ui.showModal('Temporary Ability', body, actions);
+  }
+
+  addRunCoins(amount) {
+    if (!this.run) return;
+    this.run.tempCoins += Math.max(0, Math.floor(amount));
+  }
+
+  addRunResource(id, amount) {
+    if (!this.run) return;
+    this.run.tempResources[id] = (this.run.tempResources[id] || 0) + Math.max(0, Math.floor(amount));
+  }
+
+  addRunWeapon(id) {
+    if (!this.run) return;
+    this.run.tempWeapons.push(id);
+  }
+
+  addRunXp(amount) {
+    if (!this.run) return;
+    this.run.tempXp += Math.max(0, Math.floor(amount));
+  }
+
+  onEnemyDefeated(enemy) {
+    if (enemy.training) {
+      this.notify('Training shade defeated. It reforms for more practice.', 'good');
+      window.setTimeout(() => this.ensureTrainingShade(), 800);
+      return;
+    }
+
+    this.addRunXp(enemy.data.xp !== undefined ? enemy.data.xp : 0);
+    this.dropLoot(enemy);
+    if (enemy.boss) {
+      this.run.bossDefeated = true;
+      this.world.unlockBossExit();
+      this.notify(`${enemy.name} defeated! Escape portal opened.`, 'parry');
+      this.flash('#ffd166', 0.32);
+      const weaponChance = enemy.data.weaponChance !== undefined ? enemy.data.weaponChance : 0.3;
+      if (this.rng.chance(weaponChance)) {
+        const weaponId = this.randomWeaponDrop();
+        this.spawnPickup(enemy.x, enemy.y, { kind: 'weapon', weaponId, color: RARITY[WEAPONS[weaponId].rarity].color });
+      }
+    }
+  }
+
+  dropLoot(enemy) {
+    const coinDrop = enemy.data.coinDrop || [0, 0];
+    const [coinMin, coinMax] = coinDrop;
+    const coins = this.rng.int(coinMin, coinMax);
+    if (coins > 0) this.spawnPickup(enemy.x, enemy.y, { kind: 'coins', amount: coins, color: '#ffd166' });
+    for (const drop of enemy.data.drops || []) {
+      if (this.rng.chance(drop.chance)) {
+        this.spawnPickup(enemy.x, enemy.y, {
+          kind: 'resource',
+          id: drop.id,
+          amount: this.rng.int(drop.min, drop.max),
+          color: RESOURCE_COLORS[drop.id] || '#ffecc7'
+        });
+      }
+    }
+  }
+
+  spawnPickup(x, y, data) {
+    this.pickups.push(new Pickup({ x, y, ...data }));
+  }
+
+  randomWeaponDrop() {
+    const weighted = [
+      { id: 'ember_knife', weight: 4 },
+      { id: 'shadow_edge', weight: 3 },
+      { id: 'storm_fang', weight: 3 },
+      { id: 'vampiric_fang', weight: 1.3 },
+      { id: 'bloodfang', weight: 2 }
+    ];
+    const total = weighted.reduce((s, w) => s + w.weight, 0);
+    let roll = this.rng.range(0, total);
+    for (const entry of weighted) {
+      roll -= entry.weight;
+      if (roll <= 0) return entry.id;
+    }
+    return 'ember_knife';
+  }
+
+  handlePlayerDeath() {
+    if (this.playerDying) return;
+    this.playerDying = true;
+    this.audio.play('death');
+    this.flash('#e52c59', 0.45);
+    if (this.mode === 'hunt') this.endHunt(false);
+    else {
+      this.player.health = this.player.maxHealth;
+      this.notify('The base wards revive you.', 'danger');
+      this.playerDying = false;
+    }
+  }
+
+  endHunt(success) {
+    if (!this.run) {
+      this.enterBase({ nearPortal: true });
+      return;
+    }
+    const run = this.run;
+    const keepRate = success ? 1 : 0.4;
+    const xpRate = success ? 1 : 0.55;
+    const securedCoins = Math.floor(run.tempCoins * keepRate);
+    const securedResources = {};
+    const lostResources = {};
+    for (const [id, amount] of Object.entries(run.tempResources)) {
+      securedResources[id] = Math.floor(amount * keepRate);
+      lostResources[id] = amount - securedResources[id];
+    }
+    const securedXp = Math.floor(run.tempXp * xpRate);
+    const securedWeapons = success ? [...run.tempWeapons] : run.tempWeapons.filter(() => this.rng.chance(0.4));
+    const lostWeapons = run.tempWeapons.filter((id, index) => !securedWeapons.includes(id) || securedWeapons.indexOf(id) !== index);
+
+    this.save.data.wallet.coins += securedCoins;
+    for (const [id, amount] of Object.entries(securedResources)) {
+      this.save.data.wallet.resources[id] = (this.save.data.wallet.resources[id] || 0) + amount;
+    }
+    const levelUps = this.grantPermanentXp(securedXp);
+    const weaponMessages = securedWeapons.map((id) => this.secureWeapon(id));
+    if (success) this.save.data.player.stats.huntsEscaped += 1;
+    else this.save.data.player.stats.deaths += 1;
+    this.save.save();
+
+    const title = success ? (run.bossDefeated ? 'Hunt Cleared!' : 'Loot Secured') : 'Defeated — Partial Recovery';
+    const lostText = success
+      ? '<span class="cost-ok">No temporary loot lost.</span>'
+      : `<span class="cost-missing">Lost ${run.tempCoins - securedCoins} coins, ${formatResources(lostResources, RESOURCE_NAMES)}${lostWeapons.length ? `, ${lostWeapons.map((id) => WEAPONS[id].name).join(', ')}` : ''}.</span>`;
+    const body = `<div class="info-card"><strong>${success ? 'Escaped safely.' : 'You returned to base wounded.'}</strong><br/>
+        Secured: ${securedCoins} coins · ${formatResources(securedResources, RESOURCE_NAMES)} · XP ${securedXp}<br/>
+        ${weaponMessages.filter(Boolean).join('<br/>') || ''}
+      </div>
+      <div class="info-card">${lostText}</div>
+      ${levelUps ? `<div class="info-card"><strong class="cost-ok">Level up ×${levelUps}!</strong> Your health and damage increased.</div>` : ''}
+      <p class="muted">Temporary run abilities have faded. Permanent equipment and resources remain saved offline.</p>`;
+
+    this.enterBase({ nearPortal: true });
+    this.playerDying = false;
+    this.ui.showModal(title, body, [
+      { label: 'Upgrade at Base', className: 'good', onClick: () => this.ui.closeModal() },
+      { label: 'Start Another Hunt', className: 'primary', onClick: () => this.startHunt('forest_frontier') }
+    ]);
+  }
+
+  grantPermanentXp(amount) {
+    const player = this.save.data.player;
+    player.xp += amount;
+    let ups = 0;
+    while (player.xp >= xpToNextLevel(player.level)) {
+      player.xp -= xpToNextLevel(player.level);
+      player.level += 1;
+      ups += 1;
+    }
+    this.player.syncFromSave(this.save.data, true);
+    return ups;
+  }
+
+  secureWeapon(id) {
+    const weapon = WEAPONS[id];
+    if (!weapon) return '';
+    const equipment = this.save.data.equipment;
+    if (equipment.weapons[id] && equipment.weapons[id].owned) {
+      const fragments = Math.max(2, RARITY[weapon.rarity].value + 1);
+      this.save.data.wallet.resources.weapon_fragments += fragments;
+      return `Duplicate ${weapon.name} converted to Weapon Fragments ×${fragments}.`;
+    }
+    equipment.weapons[id] = { owned: true, level: 1, foundAt: Date.now() };
+    return `<strong style="color:${RARITY[weapon.rarity].color}">${weapon.name}</strong> added to your dagger inventory.`;
+  }
+
+  notify(text, type = '') {
+    this.ui.notify(text, type);
+  }
+
+  flash(color = '#ffffff', duration = 0.2) {
+    this.flashOverlay = { color, alpha: 1, life: duration, maxLife: duration };
+  }
+
+  addParticle(particle) {
+    this.particles.push(particle);
+    if (this.particles.length > 260) this.particles.splice(0, this.particles.length - 260);
+  }
+
+  spawnText(text, x, y, color = '#ffecc7', size = 15) {
+    this.floaters.push(new FloatingText(text, x, y, { color, size }));
+    if (this.floaters.length > 64) this.floaters.shift();
+  }
+
+  spawnImpact(x, y, color = '#ffecc7', count = 8) {
+    for (let i = 0; i < count; i += 1) {
+      const a = Math.random() * TAU;
+      const s = 80 + Math.random() * 190;
+      this.addParticle(
+        new Particle({
+          x,
+          y,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s,
+          life: 0.22 + Math.random() * 0.2,
+          radius: 2 + Math.random() * 4,
+          color,
+          type: i % 4 === 0 ? 'spark' : 'circle'
+        })
+      );
+    }
+  }
+
+  spawnSlash(x, y, facing, spec, overrideColor = null) {
+    const color = overrideColor !== null && overrideColor !== undefined ? overrideColor : spec.id === 'counter' ? '#fff2a8' : spec.id === 'special' ? '#e52c59' : '#ffecc7';
+    const amount = spec.id === 'special' ? 14 : 7;
+    for (let i = 0; i < amount; i += 1) {
+      const spread = spec.arc >= TAU - 0.1 ? TAU : spec.arc;
+      const a = facing - spread / 2 + (spread * (i + 0.5)) / amount;
+      const r = (spec.range !== undefined ? spec.range : 70) * (0.45 + Math.random() * 0.45);
+      this.addParticle(
+        new Particle({
+          x: x + Math.cos(a) * r,
+          y: y + Math.sin(a) * r,
+          vx: Math.cos(a) * 120,
+          vy: Math.sin(a) * 120,
+          life: 0.12 + Math.random() * 0.12,
+          radius: spec.id === 'special' ? 16 : 11,
+          color,
+          type: 'slash'
+        })
+      );
+    }
+  }
+
+  spawnShockwave(x, y, radius, color = '#ffecc7') {
+    this.effects.push({ type: 'ring', x, y, radius, color, life: 0.38, maxLife: 0.38 });
+  }
+
+  chainLightning(origin, damage) {
+    const targets = this.enemies
+      .filter((enemy) => !enemy.dead && enemy !== origin && Math.hypot(enemy.x - origin.x, enemy.y - origin.y) < 190)
+      .sort((a, b) => Math.hypot(a.x - origin.x, a.y - origin.y) - Math.hypot(b.x - origin.x, b.y - origin.y))
+      .slice(0, 2);
+    for (const target of targets) {
+      target.takeDamage(damage, this.player, this, { attackId: 'storm', angle: angleTo(origin, target), knockback: 35 });
+      this.effects.push({ type: 'line', x: origin.x, y: origin.y, x2: target.x, y2: target.y, color: '#70e8ff', life: 0.18, maxLife: 0.18 });
+    }
+    if (targets.length) this.audio.play('crit', 0.65);
+  }
+
+  findNearestEnemy(from, maxDistance = Infinity) {
+    let best = null;
+    let bestD = maxDistance;
+    for (const enemy of this.enemies) {
+      if (enemy.dead) continue;
+      const d = Math.hypot(enemy.x - from.x, enemy.y - from.y);
+      if (d < bestD) {
+        best = enemy;
+        bestD = d;
+      }
+    }
+    return best;
+  }
+
+  getFocusedEnemy() {
+    if (this.lastTarget && !this.lastTarget.dead && this.time - this.lastTargetTime < 4.5) return this.lastTarget;
+    return this.findNearestEnemy(this.player, 220);
+  }
+
+  render(rawDt) {
+    const ctx = this.ctx;
+    const w = this.viewport.w;
+    const h = this.viewport.h;
+    ctx.clearRect(0, 0, w, h);
+    if (!this.world) return;
+
+    const desiredX = clamp(this.player.x - w / 2, 0, Math.max(0, this.world.width - w));
+    const desiredY = clamp(this.player.y - h / 2, 0, Math.max(0, this.world.height - h));
+    const ease = 1 - Math.pow(0.001, rawDt || 0.016);
+    this.camera.x += (desiredX - this.camera.x) * ease;
+    this.camera.y += (desiredY - this.camera.y) * ease;
+
+    const shakeX = this.screenShake > 0 ? (Math.random() - 0.5) * this.screenShake : 0;
+    const shakeY = this.screenShake > 0 ? (Math.random() - 0.5) * this.screenShake : 0;
+    ctx.save();
+    ctx.translate(-Math.round(this.camera.x) + shakeX, -Math.round(this.camera.y) + shakeY);
+
+    this.world.draw(ctx, this);
+
+    for (const enemy of this.enemies) enemy.drawTelegraph(ctx, this);
+    this.drawContextPrompt(ctx);
+
+    for (const pickup of this.pickups) pickup.draw(ctx);
+    for (const projectile of this.projectiles) projectile.draw(ctx);
+
+    const actors = [this.player, ...this.enemies.filter((enemy) => !enemy.dead)].sort((a, b) => a.y - b.y);
+    for (const actor of actors) actor.draw(ctx, this);
+
+    for (const effect of this.effects) this.drawEffect(ctx, effect);
+    for (const particle of this.particles) particle.draw(ctx);
+    for (const floater of this.floaters) floater.draw(ctx);
+    ctx.restore();
+
+    if (this.flashOverlay.alpha > 0) {
+      ctx.save();
+      ctx.globalAlpha = this.flashOverlay.alpha * 0.55;
+      ctx.fillStyle = this.flashOverlay.color;
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    }
+  }
+
+  drawContextPrompt(ctx) {
+    if (!this.contextAction) return;
+    const target = this.contextAction.target;
+    const x = target.x + (target.w ? target.w / 2 : 0);
+    const y = target.y - (target.r !== undefined ? target.r : 34) - 18;
+    ctx.save();
+    drawOutlinedText(ctx, `ACT: ${this.contextAction.label}`, x, y, { size: 14, color: '#ffd166', width: 4 });
+    ctx.restore();
+  }
+
+  drawEffect(ctx, effect) {
+    const t = clamp(effect.life / effect.maxLife, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = t;
+    if (effect.type === 'ring') {
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = 5 + (1 - t) * 8;
+      ctx.beginPath();
+      ctx.arc(effect.x, effect.y, effect.radius * (1.15 - t * 0.25), 0, TAU);
+      ctx.stroke();
+    } else if (effect.type === 'line') {
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(effect.x, effect.y);
+      ctx.lineTo(effect.x2, effect.y2);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+// End src/game.js
+
+// Begin src/main.js
+window.addEventListener('DOMContentLoaded', () => {
+  const game = new Game();
+  window.dagerHunter = game;
+
+  if ('serviceWorker' in navigator && !window.__DAGER_HUNTER_SINGLE_FILE__) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch((error) => {
+        console.info('Service worker registration skipped:', error);
+      });
+    });
+  }
+});
+
+// End src/main.js
+
+})();
+    </script>
+  </body>
+</html>

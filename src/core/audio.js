@@ -29,7 +29,7 @@ export class AudioManager {
   }
 
   now() {
-    return this.ctx?.currentTime ?? 0;
+    return this.ctx ? this.ctx.currentTime : 0;
   }
 
   tone({ frequency = 440, duration = 0.08, type = 'sine', gain = 0.12, start = 0, endFrequency = null, pan = 0 } = {}) {
@@ -37,7 +37,7 @@ export class AudioManager {
     const t = this.now() + start;
     const osc = this.ctx.createOscillator();
     const amp = this.ctx.createGain();
-    const stereo = this.ctx.createStereoPanner?.();
+    const stereo = this.ctx.createStereoPanner ? this.ctx.createStereoPanner() : null;
     osc.type = type;
     osc.frequency.setValueAtTime(frequency, t);
     if (endFrequency) osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFrequency), t + duration);
@@ -67,7 +67,7 @@ export class AudioManager {
     source.buffer = buffer;
     const amp = this.ctx.createGain();
     const biquad = this.ctx.createBiquadFilter();
-    const stereo = this.ctx.createStereoPanner?.();
+    const stereo = this.ctx.createStereoPanner ? this.ctx.createStereoPanner() : null;
     biquad.type = 'bandpass';
     biquad.frequency.value = filter;
     biquad.Q.value = 0.8;
