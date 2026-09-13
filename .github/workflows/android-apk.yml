@@ -7,6 +7,9 @@ on:
       - arena/01a09aeb-dager-hunter
       - main
 
+permissions:
+  contents: write
+
 jobs:
   apk:
     name: Assemble debug APK
@@ -34,8 +37,23 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build debug APK
-        working-directory: android
-        run: gradle --no-daemon assembleDebug
+        run: |
+          cd android
+          set +e
+          gradle --no-daemon assembleDebug --stacktrace --info > ../android-build.log 2>&1
+          status=$?
+          tail -300 ../android-build.log
+          exit $status
+
+      - name: Commit failure log for diagnostics
+        if: failure()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mv android-build.log android-build-failure.log
+          git add android-build-failure.log
+          git commit -m "Add Android CI failure log [skip ci]" || true
+          git push origin HEAD:arena/01a09aeb-dager-hunter || true
 
       - name: Rename APK
         run: |
